@@ -1,0 +1,9 @@
+{
+  "architecture": "x64",
+  "revision": "267a606fceda81bb63770e0b2a0aa35cc75a3a4dc47f236d79c659458ea5712f",
+  "schema": "md-mcp-packaged-cloth-vertex-context/1",
+  "library": "md_qt_cloth_vertex_context.dll",
+  "qt_version": "6.10.3",
+  "sha256": "267a606fceda81bb63770e0b2a0aa35cc75a3a4dc47f236d79c659458ea5712f",
+  "abi": 1
+}

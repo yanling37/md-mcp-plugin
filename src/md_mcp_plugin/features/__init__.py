@@ -1,0 +1,1 @@
+"""AI tool registration modules."""

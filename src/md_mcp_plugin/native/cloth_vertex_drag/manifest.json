@@ -1,0 +1,8 @@
+{
+  "schema": "md-mcp-packaged-cloth-vertex-drag/2",
+  "architecture": "x64",
+  "qt_version": "6.10.3",
+  "library": "md_qt_cloth_vertex_drag.dll",
+  "revision": "eca904f0c80f7ba603c563317cf4c9f2ad10ac7ee4cfe497c991018ec23831aa",
+  "sha256": "eca904f0c80f7ba603c563317cf4c9f2ad10ac7ee4cfe497c991018ec23831aa"
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "md-mcp-packaged-rest-selected-trial/1",
+  "architecture": "x64",
+  "qt_version": "6.10.3",
+  "library": "md_qt_rest_selected_trial_bridge.dll",
+  "revision": "57f5cc9d88e9a2b2778cab8bd3df2b7b3dfbb5dc7345a328065f1e05080a1f26",
+  "sha256": "57f5cc9d88e9a2b2778cab8bd3df2b7b3dfbb5dc7345a328065f1e05080a1f26",
+  "source_sha256": "2a28f7c3aa8edede4a795af520ab3831655b1a2c03d2cde4cd50344be0551edb",
+  "included_source_sha256": "61ae6a8c0246b1c2910f463a7ee1514c45aa0b9b6c573e058f60771428c4fc3f"
+}

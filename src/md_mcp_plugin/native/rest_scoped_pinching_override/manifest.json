@@ -1,0 +1,8 @@
+{
+  "schema": "md-mcp-packaged-rest-scoped-pinching-override/1",
+  "library": "md_qt_scoped_pinching_override.dll",
+  "sha256": "63584a6935c2d968bcf1069b20dfc34dfa39d1c7ae23504e253eab021257df61",
+  "revision": "63584a6935c2d968bcf1069b20dfc34dfa39d1c7ae23504e253eab021257df61",
+  "qt_version": "6.10.3",
+  "architecture": "x64"
+}

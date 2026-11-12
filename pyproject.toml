@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "md-mcp-plugin"
+version = "0.1.0a1"
+description = "AI-only local MCP tools for Marvelous Designer"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["mcp>=1.27,<2"]
+
+[project.scripts]
+md-mcp-plugin = "md_mcp_plugin.__main__:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["md_mcp_plugin*"]
+
+[tool.setuptools.package-data]
+md_mcp_plugin = ["native/*/manifest.json", "native/*/*/*.dll"]

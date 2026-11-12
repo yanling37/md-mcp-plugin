@@ -1,0 +1,2 @@
+# Native recipes verify source bytes on checkout.
+* -text whitespace=cr-at-eol

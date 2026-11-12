@@ -1,0 +1,11 @@
+{
+  "qt_version": "6.10.3",
+  "library": "md_qt_scene_adapter_v6_bridge.dll",
+  "revision": "6fed94ff1113de8e9a825c86bd2549dbce476456a9f8937b29dc2b438fbfa79b",
+  "schema": "md-mcp-packaged-scene-adapter/6",
+  "python_sha256": "2e2b953386c71c75c473067056da498fcc32c6e68766144827d3ae75cfb89a4c",
+  "architecture": "x64",
+  "state_key": "_md_mcp_plugin_scene_adapter_r6_state",
+  "earlier_library_unloaded": false,
+  "sha256": "6fed94ff1113de8e9a825c86bd2549dbce476456a9f8937b29dc2b438fbfa79b"
+}

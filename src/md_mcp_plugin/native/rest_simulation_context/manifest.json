@@ -1,0 +1,8 @@
+{
+  "schema": "md-mcp-packaged-rest-simulation-context/2",
+  "library": "md_qt_rest_simulation_context_v2_bridge.dll",
+  "sha256": "f056e378ec8bbb794f4d2c2dc665162f33c9745798d2aedc5f922533c52c6b9a",
+  "revision": "f056e378ec8bbb794f4d2c2dc665162f33c9745798d2aedc5f922533c52c6b9a",
+  "qt_version": "6.10.3",
+  "architecture": "x64"
+}

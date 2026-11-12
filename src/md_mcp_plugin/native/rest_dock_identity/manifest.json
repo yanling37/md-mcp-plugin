@@ -1,0 +1,8 @@
+{
+  "schema": "md-mcp-packaged-rest-dock-identity/1",
+  "library": "md_qt_rest_dock_identity_bridge.dll",
+  "sha256": "530f3f2893dd26f69e67a3b1d08297f63e687ff5fa5cd2355581a9f0e16c91a2",
+  "revision": "530f3f2893dd26f69e67a3b1d08297f63e687ff5fa5cd2355581a9f0e16c91a2",
+  "qt_version": "6.10.3",
+  "architecture": "x64"
+}

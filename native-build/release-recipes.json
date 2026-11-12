@@ -1,0 +1,1054 @@
+{
+  "schema": "mdmcp-portable-native-recipes/1",
+  "targets": {
+    "canvas": {
+      "source": "qt_canvas_bridge/bridge.cpp",
+      "included_sources": [],
+      "source_sha256": {
+        "qt_canvas_bridge/bridge.cpp": "765067c5b725e1e12e6fbc10054d9dddf08a2966c6afd0e39368f4380e7041fc"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_canvas_abi_version",
+        "mdqt_canvas_json"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6OpenGLWidgets",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_canvas_bridge.dll",
+      "original_sha256": "47d750754e2d89b6cf53356dbdc29fc79664554b9487b918fb0c189301209717",
+      "original_build_receipt_sha256": "321cfd76457b1737b45ceaa29f9bbbde593cc9c81dfb99ae804131066140dd6e",
+      "original_translation_unit_sha256": "765067c5b725e1e12e6fbc10054d9dddf08a2966c6afd0e39368f4380e7041fc",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-stdio-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "msvcp140.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6openglwidgets.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": false,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "sha256": "47d750754e2d89b6cf53356dbdc29fc79664554b9487b918fb0c189301209717",
+        "library": "md_qt_canvas_bridge.dll",
+        "source_sha256": "765067c5b725e1e12e6fbc10054d9dddf08a2966c6afd0e39368f4380e7041fc",
+        "revision": "47d750754e2d89b6cf53356dbdc29fc79664554b9487b918fb0c189301209717",
+        "architecture": "x64",
+        "qt_version": "6.10.3",
+        "schema": "md-mcp-packaged-canvas/1"
+      }
+    },
+    "cloth_meshbox_entry": {
+      "source": "qt_cloth_meshbox_entry/bridge.cpp",
+      "included_sources": [],
+      "source_sha256": {
+        "qt_cloth_meshbox_entry/bridge.cpp": "3599d91d02a0564a4348280f17ff85671e21addbb92acab2e45c29f74f97288c"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_cloth_meshbox_enter",
+        "mdqt_cloth_meshbox_entry_abi_version",
+        "mdqt_cloth_meshbox_restore"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_cloth_meshbox_entry.dll",
+      "original_sha256": "7c79f6c7f798e89cf9271d94d9c744abc7278e0eb2a0d59f9482a96eaaaa98a7",
+      "original_build_receipt_sha256": "0d573020b91b305ae60021792fc28d0f82b832a8083a4fed591b5d6a2b271fb2",
+      "original_translation_unit_sha256": "3599d91d02a0564a4348280f17ff85671e21addbb92acab2e45c29f74f97288c",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "msvcp140.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": false,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "schema": "md-mcp-packaged-cloth-meshbox-entry/1",
+        "architecture": "x64",
+        "qt_version": "6.10.3",
+        "abi": 1,
+        "library": "md_qt_cloth_meshbox_entry.dll",
+        "revision": "7c79f6c7f798e89cf9271d94d9c744abc7278e0eb2a0d59f9482a96eaaaa98a7",
+        "sha256": "7c79f6c7f798e89cf9271d94d9c744abc7278e0eb2a0d59f9482a96eaaaa98a7"
+      }
+    },
+    "cloth_meshbox_select": {
+      "source": "qt_cloth_meshbox_select/bridge.cpp",
+      "included_sources": [],
+      "source_sha256": {
+        "qt_cloth_meshbox_select/bridge.cpp": "468c96f5d416a07a7c75ebfcbca9adac1bcd12b39e28689ed7eacc1393344997"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_cloth_meshbox_select",
+        "mdqt_cloth_meshbox_select_abi_version"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6OpenGLWidgets",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_cloth_meshbox_select.dll",
+      "original_sha256": "21f9c4fab4ada626935fa69796b4f3ee21535078e46e485a95cafe03d3fede48",
+      "original_build_receipt_sha256": "88438609b31e6bf029a3f48f43ddbd91c76ef8ffaa8ab2242d5b30fddf457646",
+      "original_translation_unit_sha256": "f136a746738e4366bedcbfad89dfb2b6c8a63760b04b3b7f2b2de83c484e1ad7",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-stdio-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "msvcp140.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6openglwidgets.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": false,
+      "install_directory_binding": true,
+      "manifest_template": {
+        "schema": "md-mcp-packaged-cloth-meshbox-select/1",
+        "architecture": "x64",
+        "qt_version": "6.10.3",
+        "abi": 1,
+        "library": "md_qt_cloth_meshbox_select.dll",
+        "revision": "21f9c4fab4ada626935fa69796b4f3ee21535078e46e485a95cafe03d3fede48",
+        "sha256": "21f9c4fab4ada626935fa69796b4f3ee21535078e46e485a95cafe03d3fede48"
+      }
+    },
+    "cloth_vertex_context": {
+      "source": "qt_cloth_vertex_context/bridge.cpp",
+      "included_sources": [],
+      "source_sha256": {
+        "qt_cloth_vertex_context/bridge.cpp": "7267416719dbfcefd140febc92aeee0eba4b7e679470d0f479399fd71926644e"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_cloth_vertex_context_abi_version",
+        "mdqt_cloth_vertex_context_inspect"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_cloth_vertex_context.dll",
+      "original_sha256": "267a606fceda81bb63770e0b2a0aa35cc75a3a4dc47f236d79c659458ea5712f",
+      "original_build_receipt_sha256": "a98100634d73cdcdaef3771c52443c36a666687851c47a49f1bc94355dd517c3",
+      "original_translation_unit_sha256": "7267416719dbfcefd140febc92aeee0eba4b7e679470d0f479399fd71926644e",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "msvcp140.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": false,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "architecture": "x64",
+        "revision": "267a606fceda81bb63770e0b2a0aa35cc75a3a4dc47f236d79c659458ea5712f",
+        "schema": "md-mcp-packaged-cloth-vertex-context/1",
+        "library": "md_qt_cloth_vertex_context.dll",
+        "qt_version": "6.10.3",
+        "sha256": "267a606fceda81bb63770e0b2a0aa35cc75a3a4dc47f236d79c659458ea5712f",
+        "abi": 1
+      }
+    },
+    "cloth_vertex_drag": {
+      "source": "qt_cloth_vertex_drag/bridge.cpp",
+      "included_sources": [],
+      "source_sha256": {
+        "qt_cloth_vertex_drag/bridge.cpp": "f663ad0ae6ad37d60125d730d6a8aee51e746552b8b44579846f1c81d044a84c"
+      },
+      "abi": 2,
+      "exports": [
+        "mdqt_cloth_vertex_drag",
+        "mdqt_cloth_vertex_drag_abi_version"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6OpenGLWidgets",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_cloth_vertex_drag.dll",
+      "original_sha256": "eca904f0c80f7ba603c563317cf4c9f2ad10ac7ee4cfe497c991018ec23831aa",
+      "original_build_receipt_sha256": "3925ff02bdbee1d9a969a74cd47fec284c407d668dbafc7cce46e6cd9333fb2c",
+      "original_translation_unit_sha256": "f663ad0ae6ad37d60125d730d6a8aee51e746552b8b44579846f1c81d044a84c",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-stdio-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "msvcp140.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6openglwidgets.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": false,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "schema": "md-mcp-packaged-cloth-vertex-drag/2",
+        "architecture": "x64",
+        "qt_version": "6.10.3",
+        "library": "md_qt_cloth_vertex_drag.dll",
+        "revision": "eca904f0c80f7ba603c563317cf4c9f2ad10ac7ee4cfe497c991018ec23831aa",
+        "sha256": "eca904f0c80f7ba603c563317cf4c9f2ad10ac7ee4cfe497c991018ec23831aa"
+      }
+    },
+    "cut_qt_atomic": {
+      "source": "qt_cut_qt_atomic_bridge/bridge.cpp",
+      "included_sources": [
+        "qt_cut_qt_atomic_bridge/canvas_common.inc"
+      ],
+      "source_sha256": {
+        "qt_cut_qt_atomic_bridge/bridge.cpp": "86479ec6011fece407254df7f8e3f0797cc8d89c851383896a18f6724c7caf71",
+        "qt_cut_qt_atomic_bridge/canvas_common.inc": "a04e10eb7d85d26f4a0278641a7ab87c2ace1a7a8b8e9b65729e7adc1279a9ab"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_cut_qt_atomic_abi_version",
+        "mdqt_cut_qt_atomic_json"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6OpenGLWidgets",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_cut_qt_atomic_bridge.dll",
+      "original_sha256": "dab083265d40fff2bf88ee78d013a0f2616c68b2658a31fca9daf73e01fda82e",
+      "original_build_receipt_sha256": "362695a59b46a67c560c48c016ce05e343a23c745f836280a9cfd9d92a1299eb",
+      "original_translation_unit_sha256": "86479ec6011fece407254df7f8e3f0797cc8d89c851383896a18f6724c7caf71",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "msvcp140.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6openglwidgets.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": true,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "schema": "md-mcp-packaged-cut-qt-atomic/1",
+        "library": "md_qt_cut_qt_atomic_bridge.dll",
+        "sha256": "dab083265d40fff2bf88ee78d013a0f2616c68b2658a31fca9daf73e01fda82e",
+        "revision": "dab083265d40fff2bf88ee78d013a0f2616c68b2658a31fca9daf73e01fda82e",
+        "qt_version": "6.10.3",
+        "architecture": "x64"
+      }
+    },
+    "gizmo_scale_v2": {
+      "source": "qt_gizmo_scale_v2/bridge.cpp",
+      "included_sources": [
+        "qt_world_adapter/canvas_common.inc"
+      ],
+      "source_sha256": {
+        "qt_gizmo_scale_v2/bridge.cpp": "398bcea0008c7779c84d5e3ec5a4381ab063d751bcc7c77f31b85c80fb655e1b",
+        "qt_world_adapter/canvas_common.inc": "c9177d81dce1d41a455176118aae6e0cdf68116c8bac93f77f55dc215d80ed92"
+      },
+      "abi": 2,
+      "exports": [
+        "mdqt_gizmo_scale_v2_abi_version",
+        "mdqt_gizmo_scale_v2_json"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6OpenGLWidgets",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_gizmo_scale_v2.dll",
+      "original_sha256": "d1f615152f7f3ec7535ce3c60507068bc9e2e97b63f03a0dc0860b777c5bc482",
+      "original_build_receipt_sha256": "32a37abd2bee2b09897327d881db18047d7dfc22be195960d5300dad39aed7e2",
+      "original_translation_unit_sha256": "398bcea0008c7779c84d5e3ec5a4381ab063d751bcc7c77f31b85c80fb655e1b",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "msvcp140.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6openglwidgets.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": true,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "architecture": "x64",
+        "library": "md_qt_gizmo_scale_v2.dll",
+        "schema": "md-mcp-packaged-gizmo-scale/2",
+        "qt_version": "6.10.3",
+        "sha256": "d1f615152f7f3ec7535ce3c60507068bc9e2e97b63f03a0dc0860b777c5bc482"
+      }
+    },
+    "rest_dock_identity": {
+      "source": "qt_rest_adapter/dock_identity_bridge.cpp",
+      "included_sources": [
+        "qt_rest_adapter/bridge.cpp"
+      ],
+      "source_sha256": {
+        "qt_rest_adapter/dock_identity_bridge.cpp": "e31dc8e6ee6df5d774bf9a53ef3a02ec23f5c6510a0e777d9e76dcf643ee62f1",
+        "qt_rest_adapter/bridge.cpp": "61ae6a8c0246b1c2910f463a7ee1514c45aa0b9b6c573e058f60771428c4fc3f"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_rest_adapter_abi_version",
+        "mdqt_rest_adapter_inspect",
+        "mdqt_rest_dock_identity_abi_version",
+        "mdqt_rest_dock_identity_inspect"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_rest_dock_identity_bridge.dll",
+      "original_sha256": "530f3f2893dd26f69e67a3b1d08297f63e687ff5fa5cd2355581a9f0e16c91a2",
+      "original_build_receipt_sha256": "bb5c30bca86dbdb2ac10ee28cbe7041414e167a964f1d011cb334ee5a7abfdcd",
+      "original_translation_unit_sha256": "e31dc8e6ee6df5d774bf9a53ef3a02ec23f5c6510a0e777d9e76dcf643ee62f1",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": false,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "schema": "md-mcp-packaged-rest-dock-identity/1",
+        "library": "md_qt_rest_dock_identity_bridge.dll",
+        "sha256": "530f3f2893dd26f69e67a3b1d08297f63e687ff5fa5cd2355581a9f0e16c91a2",
+        "revision": "530f3f2893dd26f69e67a3b1d08297f63e687ff5fa5cd2355581a9f0e16c91a2",
+        "qt_version": "6.10.3",
+        "architecture": "x64"
+      }
+    },
+    "rest_host_controls": {
+      "source": "qt_rest_adapter/bridge.cpp",
+      "included_sources": [],
+      "source_sha256": {
+        "qt_rest_adapter/bridge.cpp": "61ae6a8c0246b1c2910f463a7ee1514c45aa0b9b6c573e058f60771428c4fc3f"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_rest_host_controls_abi_version",
+        "mdqt_rest_host_controls_inspect"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_rest_host_controls_bridge.dll",
+      "original_sha256": "7ebe66705e1c7d9c5db521dd1f1e0828c9a55ad8e549ddb10dffdafe221ab64a",
+      "original_build_receipt_sha256": "ec9db8820e911eafefc25c75827b1b47538287f66a3119423839474706487815",
+      "original_translation_unit_sha256": "61ae6a8c0246b1c2910f463a7ee1514c45aa0b9b6c573e058f60771428c4fc3f",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [
+        "MDMCP_REST_HOST_CONTROLS"
+      ],
+      "unused_static_functions": false,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "schema": "md-mcp-packaged-rest-host-controls/1",
+        "architecture": "x64",
+        "qt_version": "6.10.3",
+        "revision": "7ebe66705e1c7d9c5db521dd1f1e0828c9a55ad8e549ddb10dffdafe221ab64a",
+        "sha256": "7ebe66705e1c7d9c5db521dd1f1e0828c9a55ad8e549ddb10dffdafe221ab64a",
+        "library": "md_qt_rest_host_controls_bridge.dll",
+        "source_sha256": "61ae6a8c0246b1c2910f463a7ee1514c45aa0b9b6c573e058f60771428c4fc3f"
+      }
+    },
+    "rest_pinching_override": {
+      "source": "qt_rest_adapter/pinching_override_bridge.cpp",
+      "included_sources": [
+        "qt_rest_adapter/bridge.cpp",
+        "qt_rest_adapter/contents_local_bridge.cpp"
+      ],
+      "source_sha256": {
+        "qt_rest_adapter/pinching_override_bridge.cpp": "7c54a421b7f449a767362086440d95cf937a0569198565a3df2420f79cb81fc5",
+        "qt_rest_adapter/contents_local_bridge.cpp": "e19aa6651bc3f1c67d8ecd3b283ec5ec62c23c83a6f60353349fb2f807144b27",
+        "qt_rest_adapter/bridge.cpp": "61ae6a8c0246b1c2910f463a7ee1514c45aa0b9b6c573e058f60771428c4fc3f"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_pinching_override_abi_version",
+        "mdqt_rest_adapter_abi_version",
+        "mdqt_rest_adapter_inspect",
+        "mdqt_rest_contents_local_abi_version",
+        "mdqt_rest_contents_local_inspect",
+        "mdqt_set_pinching_override"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_rest_pinching_override_bridge.dll",
+      "original_sha256": "474547f77574c7dcff389fb1dcc8314071f4bedf3bddb917a9e96503756028ba",
+      "original_build_receipt_sha256": "08ec20058ecdf2646ab2bfb06be4e6dbed63c60dfb0301e50361843fb6dbb01a",
+      "original_translation_unit_sha256": "7c54a421b7f449a767362086440d95cf937a0569198565a3df2420f79cb81fc5",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": false,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "schema": "md-mcp-packaged-rest-pinching-override/1",
+        "library": "md_qt_rest_pinching_override_bridge.dll",
+        "sha256": "474547f77574c7dcff389fb1dcc8314071f4bedf3bddb917a9e96503756028ba",
+        "revision": "474547f77574c7dcff389fb1dcc8314071f4bedf3bddb917a9e96503756028ba",
+        "qt_version": "6.10.3",
+        "architecture": "x64"
+      }
+    },
+    "rest_scoped_pinching_override": {
+      "source": "qt_rest_adapter/scoped_pinching_override_bridge.cpp",
+      "included_sources": [
+        "qt_world_adapter/canvas_common.inc",
+        "qt_world_grid_step/bridge.cpp"
+      ],
+      "source_sha256": {
+        "qt_rest_adapter/scoped_pinching_override_bridge.cpp": "97cc52be973a1d295f63621be91da7f442eef15c8657d56a29833d87fe219dbb",
+        "qt_world_grid_step/bridge.cpp": "367edc67f2311faff2bca935d45f2982ac7bc27d53edaee58b25067b5250f39c",
+        "qt_world_adapter/canvas_common.inc": "c9177d81dce1d41a455176118aae6e0cdf68116c8bac93f77f55dc215d80ed92"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_scoped_pinching_override",
+        "mdqt_scoped_pinching_override_abi_version"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_scoped_pinching_override.dll",
+      "original_sha256": "63584a6935c2d968bcf1069b20dfc34dfa39d1c7ae23504e253eab021257df61",
+      "original_build_receipt_sha256": "e813ed16cc1ac2faeafdcffdb527d46d33e3ac0ed77ceb9d9fcfcc2ddd3eb8cc",
+      "original_translation_unit_sha256": "97cc52be973a1d295f63621be91da7f442eef15c8657d56a29833d87fe219dbb",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "msvcp140.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": true,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "schema": "md-mcp-packaged-rest-scoped-pinching-override/1",
+        "library": "md_qt_scoped_pinching_override.dll",
+        "sha256": "63584a6935c2d968bcf1069b20dfc34dfa39d1c7ae23504e253eab021257df61",
+        "revision": "63584a6935c2d968bcf1069b20dfc34dfa39d1c7ae23504e253eab021257df61",
+        "qt_version": "6.10.3",
+        "architecture": "x64"
+      }
+    },
+    "rest_selected_trial": {
+      "source": "qt_rest_adapter/selected_trial_bridge.cpp",
+      "included_sources": [
+        "qt_rest_adapter/bridge.cpp"
+      ],
+      "source_sha256": {
+        "qt_rest_adapter/selected_trial_bridge.cpp": "2a28f7c3aa8edede4a795af520ab3831655b1a2c03d2cde4cd50344be0551edb",
+        "qt_rest_adapter/bridge.cpp": "61ae6a8c0246b1c2910f463a7ee1514c45aa0b9b6c573e058f60771428c4fc3f"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_rest_host_controls_abi_version",
+        "mdqt_rest_host_controls_inspect",
+        "mdqt_rest_selected_trial_abi_version",
+        "mdqt_rest_selected_trial_click"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_rest_selected_trial_bridge.dll",
+      "original_sha256": "57f5cc9d88e9a2b2778cab8bd3df2b7b3dfbb5dc7345a328065f1e05080a1f26",
+      "original_build_receipt_sha256": "e2dc846e3ff57b865f318c6be55ec884da94854395233878a86fdb32d81d958c",
+      "original_translation_unit_sha256": "2a28f7c3aa8edede4a795af520ab3831655b1a2c03d2cde4cd50344be0551edb",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": false,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "schema": "md-mcp-packaged-rest-selected-trial/1",
+        "architecture": "x64",
+        "qt_version": "6.10.3",
+        "library": "md_qt_rest_selected_trial_bridge.dll",
+        "revision": "57f5cc9d88e9a2b2778cab8bd3df2b7b3dfbb5dc7345a328065f1e05080a1f26",
+        "sha256": "57f5cc9d88e9a2b2778cab8bd3df2b7b3dfbb5dc7345a328065f1e05080a1f26",
+        "source_sha256": "2a28f7c3aa8edede4a795af520ab3831655b1a2c03d2cde4cd50344be0551edb",
+        "included_source_sha256": "61ae6a8c0246b1c2910f463a7ee1514c45aa0b9b6c573e058f60771428c4fc3f"
+      }
+    },
+    "rest_simulation_context": {
+      "source": "qt_rest_adapter/simulation_context_bridge.cpp",
+      "included_sources": [
+        "qt_rest_adapter/bridge.cpp"
+      ],
+      "source_sha256": {
+        "qt_rest_adapter/simulation_context_bridge.cpp": "5dd27f31c928a2465e275e510e7d124038443618eb0c13a4d9bc0794f5d20af7",
+        "qt_rest_adapter/bridge.cpp": "61ae6a8c0246b1c2910f463a7ee1514c45aa0b9b6c573e058f60771428c4fc3f"
+      },
+      "abi": 2,
+      "exports": [
+        "mdqt_rest_adapter_abi_version",
+        "mdqt_rest_adapter_inspect",
+        "mdqt_rest_simulation_context_abi_version",
+        "mdqt_rest_simulation_context_inspect"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_rest_simulation_context_v2_bridge.dll",
+      "original_sha256": "f056e378ec8bbb794f4d2c2dc665162f33c9745798d2aedc5f922533c52c6b9a",
+      "original_build_receipt_sha256": "40a5f200933cc29cb6108bd418193b987b0601448d79d7e3f85d77e89a8281b7",
+      "original_translation_unit_sha256": "5dd27f31c928a2465e275e510e7d124038443618eb0c13a4d9bc0794f5d20af7",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": false,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "schema": "md-mcp-packaged-rest-simulation-context/2",
+        "library": "md_qt_rest_simulation_context_v2_bridge.dll",
+        "sha256": "f056e378ec8bbb794f4d2c2dc665162f33c9745798d2aedc5f922533c52c6b9a",
+        "revision": "f056e378ec8bbb794f4d2c2dc665162f33c9745798d2aedc5f922533c52c6b9a",
+        "qt_version": "6.10.3",
+        "architecture": "x64"
+      }
+    },
+    "rest_visible_contents": {
+      "source": "qt_rest_adapter/visible_contents_bridge.cpp",
+      "included_sources": [
+        "qt_rest_adapter/bridge.cpp"
+      ],
+      "source_sha256": {
+        "qt_rest_adapter/visible_contents_bridge.cpp": "1535d4637fea6e2a67c5115ab6195936407511d39ff875da968550ff51d206d8",
+        "qt_rest_adapter/bridge.cpp": "61ae6a8c0246b1c2910f463a7ee1514c45aa0b9b6c573e058f60771428c4fc3f"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_rest_adapter_abi_version",
+        "mdqt_rest_adapter_inspect",
+        "mdqt_rest_visible_contents_abi_version",
+        "mdqt_rest_visible_contents_inspect",
+        "mdqt_rest_visible_contents_open_simulation_properties"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_rest_visible_contents_bridge.dll",
+      "original_sha256": "ca99b15e53d1edc983ff4a856932cbf447cc03e56a8c47543e89a4009c644892",
+      "original_build_receipt_sha256": "839f289bc50c5db8011ffd1c722794704ff04149526fe2741db02731ec76c9a4",
+      "original_translation_unit_sha256": "61fd9abf0baf2c45a2d37525036db77637737681e256ad2baa7e03570d9970ac",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": false,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "schema": "md-mcp-packaged-rest-visible-contents/1",
+        "library": "md_qt_rest_visible_contents_bridge.dll",
+        "sha256": "ca99b15e53d1edc983ff4a856932cbf447cc03e56a8c47543e89a4009c644892",
+        "revision": "ca99b15e53d1edc983ff4a856932cbf447cc03e56a8c47543e89a4009c644892",
+        "qt_version": "6.10.3",
+        "architecture": "x64"
+      }
+    },
+    "rest_visible_recovery": {
+      "source": "qt_rest_adapter/contents_local_bridge.cpp",
+      "included_sources": [
+        "qt_rest_adapter/bridge.cpp"
+      ],
+      "source_sha256": {
+        "qt_rest_adapter/contents_local_bridge.cpp": "e19aa6651bc3f1c67d8ecd3b283ec5ec62c23c83a6f60353349fb2f807144b27",
+        "qt_rest_adapter/bridge.cpp": "61ae6a8c0246b1c2910f463a7ee1514c45aa0b9b6c573e058f60771428c4fc3f"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_rest_adapter_abi_version",
+        "mdqt_rest_adapter_inspect",
+        "mdqt_rest_contents_local_abi_version",
+        "mdqt_rest_contents_local_inspect"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_rest_contents_local_bridge.dll",
+      "original_sha256": "60e55fffe79405ebfe5f5c814773342d79184439953924eff2dbbb72858ea33f",
+      "original_build_receipt_sha256": "5f439355a008029445e1eeac8609e0827c697f07f311cd5611d0082327af2790",
+      "original_translation_unit_sha256": "e19aa6651bc3f1c67d8ecd3b283ec5ec62c23c83a6f60353349fb2f807144b27",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": false,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "schema": "md-mcp-packaged-rest-visible-recovery/1",
+        "library": "md_qt_rest_contents_local_bridge.dll",
+        "sha256": "60e55fffe79405ebfe5f5c814773342d79184439953924eff2dbbb72858ea33f",
+        "revision": "60e55fffe79405ebfe5f5c814773342d79184439953924eff2dbbb72858ea33f",
+        "qt_version": "6.10.3",
+        "architecture": "x64"
+      }
+    },
+    "scene_adapter": {
+      "source": "qt_scene_adapter_v6/bridge.cpp",
+      "included_sources": [
+        "qt_scene_adapter_v6/canvas_common.inc",
+        "qt_scene_adapter_v6/capture_gl.inc"
+      ],
+      "source_sha256": {
+        "qt_scene_adapter_v6/bridge.cpp": "f2833e9cbbc66bf7d6cafbaa78b16eccbec1f252bfc3cdaa0a88f5c46c467885",
+        "qt_scene_adapter_v6/canvas_common.inc": "fc7a3794a75e889bfc51726217269285c2ad8641d8f4c8a932322f2071585878",
+        "qt_scene_adapter_v6/capture_gl.inc": "829938bfdc4f0281fbe0ea804159514acf716ae365bf5f84a5debaebe4d7f2c9"
+      },
+      "abi": 6,
+      "exports": [
+        "mdqt_scene_adapter_abi_version",
+        "mdqt_scene_adapter_json"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6OpenGLWidgets",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_scene_adapter_v6_bridge.dll",
+      "original_sha256": "6fed94ff1113de8e9a825c86bd2549dbce476456a9f8937b29dc2b438fbfa79b",
+      "original_build_receipt_sha256": "da8de282487825dd95947d3b26cd93f1ee6794016d6ddef927b955aaca4bae2c",
+      "original_translation_unit_sha256": "f2833e9cbbc66bf7d6cafbaa78b16eccbec1f252bfc3cdaa0a88f5c46c467885",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-stdio-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "msvcp140.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6openglwidgets.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": true,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "qt_version": "6.10.3",
+        "library": "md_qt_scene_adapter_v6_bridge.dll",
+        "revision": "6fed94ff1113de8e9a825c86bd2549dbce476456a9f8937b29dc2b438fbfa79b",
+        "schema": "md-mcp-packaged-scene-adapter/6",
+        "python_sha256": "2e2b953386c71c75c473067056da498fcc32c6e68766144827d3ae75cfb89a4c",
+        "architecture": "x64",
+        "state_key": "_md_mcp_plugin_scene_adapter_r6_state",
+        "earlier_library_unloaded": false,
+        "sha256": "6fed94ff1113de8e9a825c86bd2549dbce476456a9f8937b29dc2b438fbfa79b"
+      }
+    },
+    "world_adapter": {
+      "source": "qt_world_adapter/bridge.cpp",
+      "included_sources": [
+        "qt_world_adapter/canvas_common.inc"
+      ],
+      "source_sha256": {
+        "qt_world_adapter/bridge.cpp": "ec200a8387ce13f2a926407d0256f96c41ae5017e4e38936fc395544eddc678c",
+        "qt_world_adapter/canvas_common.inc": "c9177d81dce1d41a455176118aae6e0cdf68116c8bac93f77f55dc215d80ed92"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_world_adapter_abi_version",
+        "mdqt_world_adapter_json"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6OpenGLWidgets",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_world_adapter_bridge.dll",
+      "original_sha256": "718edd85e10a6e8458ff0781e052a9aa17822c4dfd0b8e9432cc86470724d5de",
+      "original_build_receipt_sha256": "8217ba7e75061d72fc926cdee1404fefd3af02c8eaec20e72a145e57317241bf",
+      "original_translation_unit_sha256": "ec200a8387ce13f2a926407d0256f96c41ae5017e4e38936fc395544eddc678c",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "msvcp140.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6openglwidgets.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": true,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "schema": "md-mcp-packaged-world-adapter/1",
+        "library": "md_qt_world_adapter_bridge.dll",
+        "sha256": "718edd85e10a6e8458ff0781e052a9aa17822c4dfd0b8e9432cc86470724d5de",
+        "revision": "718edd85e10a6e8458ff0781e052a9aa17822c4dfd0b8e9432cc86470724d5de",
+        "qt_version": "6.10.3",
+        "architecture": "x64"
+      }
+    },
+    "world_frame_probe": {
+      "source": "qt_world_frame_probe/bridge.cpp",
+      "included_sources": [
+        "qt_world_frame_probe/canvas_common.inc",
+        "qt_world_frame_probe/capture_gl.inc"
+      ],
+      "source_sha256": {
+        "qt_world_frame_probe/bridge.cpp": "2ce08df480328b83c687bccd03fc0927b8f7e54d14be35559f3f5d75dff09046",
+        "qt_world_frame_probe/canvas_common.inc": "9f1d992b821176b06b7c1360f2fbacc489d6c741721fa8f5f46e2c7aa076384f",
+        "qt_world_frame_probe/capture_gl.inc": "a966a6731093db1456b8722f8b45f974b3539df515b2d26d00581e94f756758e"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_world_frame_probe_abi_version",
+        "mdqt_world_frame_probe_json"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6OpenGLWidgets",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_world_frame_probe_bridge.dll",
+      "original_sha256": "73aad0347cc5209d18d0c91a47d665053a479bf3b2f5edd1cef3a881d3f703aa",
+      "original_build_receipt_sha256": "e5a076b699bcc539c55386a03b54fd3d32fa760db4a49fc766a2615b7e6b2ffc",
+      "original_translation_unit_sha256": "2ce08df480328b83c687bccd03fc0927b8f7e54d14be35559f3f5d75dff09046",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "msvcp140.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6openglwidgets.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": true,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "library": "md_qt_world_frame_probe_bridge.dll",
+        "architecture": "x64",
+        "schema": "md-mcp-packaged-world-frame-probe/1",
+        "sha256": "73aad0347cc5209d18d0c91a47d665053a479bf3b2f5edd1cef3a881d3f703aa",
+        "revision": "73aad0347cc5209d18d0c91a47d665053a479bf3b2f5edd1cef3a881d3f703aa",
+        "qt_version": "6.10.3"
+      }
+    },
+    "world_grid_step": {
+      "source": "qt_world_grid_step/verified_grid_step.cpp",
+      "included_sources": [
+        "qt_world_adapter/canvas_common.inc"
+      ],
+      "source_sha256": {
+        "qt_world_grid_step/verified_grid_step.cpp": "1b8b0db11f7ef78fc8b63c18604fb5b2471d5042ac0452f58c538bbd32f58241",
+        "qt_world_adapter/canvas_common.inc": "c9177d81dce1d41a455176118aae6e0cdf68116c8bac93f77f55dc215d80ed92"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_world_grid_step_abi_version",
+        "mdqt_world_grid_step_json"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_world_grid_step.dll",
+      "original_sha256": "1595e064afa349606e64e8e2482a6309011f8f1b1246a1c31a4c01d92b429943",
+      "original_build_receipt_sha256": "9f828d98eb851cab707a7b4a6bb4740becc6a4f149005421d445b9a6e8bd3400",
+      "original_translation_unit_sha256": "1b8b0db11f7ef78fc8b63c18604fb5b2471d5042ac0452f58c538bbd32f58241",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "msvcp140.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": false,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "library": "md_qt_world_grid_step.dll",
+        "qt_version": "6.10.3",
+        "schema": "md-mcp-packaged-world-grid-step/1",
+        "architecture": "x64",
+        "revision": "1595e064afa349606e64e8e2482a6309011f8f1b1246a1c31a4c01d92b429943",
+        "sha256": "1595e064afa349606e64e8e2482a6309011f8f1b1246a1c31a4c01d92b429943"
+      }
+    },
+    "world_numeric_probe": {
+      "source": "qt_world_numeric_probe/bridge.cpp",
+      "included_sources": [],
+      "source_sha256": {
+        "qt_world_numeric_probe/bridge.cpp": "93d2e4b4c66746176c7c0f392ef5729eae7bc99a46c1226886b49f43a71c2ff0"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_world_numeric_probe_abi_version",
+        "mdqt_world_numeric_probe_inspect"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_world_numeric_probe.dll",
+      "original_sha256": "88c11ca9b372a1faba6b138b40cbc37450f457ed65e8e64962a9dc69c30424c1",
+      "original_build_receipt_sha256": "d6e6e74c5e6a45e37020c889991fc06ca4bfff078e31f38c708892e18a9e160d",
+      "original_translation_unit_sha256": "93d2e4b4c66746176c7c0f392ef5729eae7bc99a46c1226886b49f43a71c2ff0",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6widgets.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": false,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "schema": "md-mcp-packaged-world-numeric-probe/1",
+        "library": "md_qt_world_numeric_probe.dll",
+        "sha256": "88c11ca9b372a1faba6b138b40cbc37450f457ed65e8e64962a9dc69c30424c1",
+        "revision": "88c11ca9b372a1faba6b138b40cbc37450f457ed65e8e64962a9dc69c30424c1",
+        "qt_version": "6.10.3",
+        "architecture": "x64"
+      }
+    },
+    "rest_cold": {
+      "source": "qt_rest_adapter/rest_cold_bridge.cpp",
+      "included_sources": [
+        "qt_rest_adapter/rest_cold_lifecycle.hpp",
+        "qt_rest_adapter/rest_cold_simulation_contract.hpp",
+        "qt_rest_adapter/rest_cold_native_refresh.hpp"
+      ],
+      "source_sha256": {
+        "qt_rest_adapter/rest_cold_bridge.cpp": "2312f9793cdcc241afb825f5c929eec486dd4bcd502a993edb2be735ba4fdd7c",
+        "qt_rest_adapter/rest_cold_lifecycle.hpp": "9c69c566592bbab135d544021fa634e38a2cd1376c5024df6dc28e969b8e84ca",
+        "qt_rest_adapter/rest_cold_simulation_contract.hpp": "db715e7dec40e559ac5a5923599f8c1ebbcbc23ab240495293921fcffb8337a1",
+        "qt_rest_adapter/rest_cold_native_refresh.hpp": "37386157ba9077ac5ad7e4abc2667f671cb55d61f7f33f92c5e1b820150ee7a7"
+      },
+      "abi": 1,
+      "exports": [
+        "mdqt_rest_cold_abi_version",
+        "mdqt_rest_cold_begin",
+        "mdqt_rest_cold_poll"
+      ],
+      "qt_modules": [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6Widgets"
+      ],
+      "library": "md_qt_rest_cold_bridge.dll",
+      "original_sha256": null,
+      "original_translation_unit_sha256": "2312f9793cdcc241afb825f5c929eec486dd4bcd502a993edb2be735ba4fdd7c",
+      "expected_import_libraries": [
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "kernel32.dll",
+        "msvcp140.dll",
+        "qt6core.dll",
+        "qt6gui.dll",
+        "qt6widgets.dll",
+        "user32.dll",
+        "vcruntime140.dll",
+        "vcruntime140_1.dll"
+      ],
+      "defines": [],
+      "unused_static_functions": false,
+      "install_directory_binding": false,
+      "manifest_template": {
+        "library": "md_qt_rest_cold_bridge.dll",
+        "architecture": "x64",
+        "qt_version": "6.10.3",
+        "c_abi_version": 1,
+        "schema": "md-mcp-packaged-rest-cold/1"
+      }
+    }
+  }
+}

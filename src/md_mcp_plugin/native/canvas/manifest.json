@@ -1,0 +1,9 @@
+{
+  "sha256": "47d750754e2d89b6cf53356dbdc29fc79664554b9487b918fb0c189301209717",
+  "library": "md_qt_canvas_bridge.dll",
+  "source_sha256": "765067c5b725e1e12e6fbc10054d9dddf08a2966c6afd0e39368f4380e7041fc",
+  "revision": "47d750754e2d89b6cf53356dbdc29fc79664554b9487b918fb0c189301209717",
+  "architecture": "x64",
+  "qt_version": "6.10.3",
+  "schema": "md-mcp-packaged-canvas/1"
+}

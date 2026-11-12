@@ -1,0 +1,8 @@
+{
+  "schema": "md-mcp-packaged-cut-qt-atomic/1",
+  "library": "md_qt_cut_qt_atomic_bridge.dll",
+  "sha256": "dab083265d40fff2bf88ee78d013a0f2616c68b2658a31fca9daf73e01fda82e",
+  "revision": "dab083265d40fff2bf88ee78d013a0f2616c68b2658a31fca9daf73e01fda82e",
+  "qt_version": "6.10.3",
+  "architecture": "x64"
+}

@@ -1,0 +1,9 @@
+{
+  "schema": "md-mcp-packaged-rest-host-controls/1",
+  "architecture": "x64",
+  "qt_version": "6.10.3",
+  "revision": "7ebe66705e1c7d9c5db521dd1f1e0828c9a55ad8e549ddb10dffdafe221ab64a",
+  "sha256": "7ebe66705e1c7d9c5db521dd1f1e0828c9a55ad8e549ddb10dffdafe221ab64a",
+  "library": "md_qt_rest_host_controls_bridge.dll",
+  "source_sha256": "61ae6a8c0246b1c2910f463a7ee1514c45aa0b9b6c573e058f60771428c4fc3f"
+}

@@ -1,0 +1,8 @@
+{
+  "schema": "md-mcp-packaged-world-adapter/1",
+  "library": "md_qt_world_adapter_bridge.dll",
+  "sha256": "718edd85e10a6e8458ff0781e052a9aa17822c4dfd0b8e9432cc86470724d5de",
+  "revision": "718edd85e10a6e8458ff0781e052a9aa17822c4dfd0b8e9432cc86470724d5de",
+  "qt_version": "6.10.3",
+  "architecture": "x64"
+}

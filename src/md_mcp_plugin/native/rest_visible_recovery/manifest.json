@@ -1,0 +1,8 @@
+{
+  "schema": "md-mcp-packaged-rest-visible-recovery/1",
+  "library": "md_qt_rest_contents_local_bridge.dll",
+  "sha256": "60e55fffe79405ebfe5f5c814773342d79184439953924eff2dbbb72858ea33f",
+  "revision": "60e55fffe79405ebfe5f5c814773342d79184439953924eff2dbbb72858ea33f",
+  "qt_version": "6.10.3",
+  "architecture": "x64"
+}

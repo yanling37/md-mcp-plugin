@@ -1,0 +1,8 @@
+{
+  "library": "md_qt_world_grid_step.dll",
+  "qt_version": "6.10.3",
+  "schema": "md-mcp-packaged-world-grid-step/1",
+  "architecture": "x64",
+  "revision": "1595e064afa349606e64e8e2482a6309011f8f1b1246a1c31a4c01d92b429943",
+  "sha256": "1595e064afa349606e64e8e2482a6309011f8f1b1246a1c31a4c01d92b429943"
+}

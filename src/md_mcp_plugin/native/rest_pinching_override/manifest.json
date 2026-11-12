@@ -1,0 +1,8 @@
+{
+  "schema": "md-mcp-packaged-rest-pinching-override/1",
+  "library": "md_qt_rest_pinching_override_bridge.dll",
+  "sha256": "474547f77574c7dcff389fb1dcc8314071f4bedf3bddb917a9e96503756028ba",
+  "revision": "474547f77574c7dcff389fb1dcc8314071f4bedf3bddb917a9e96503756028ba",
+  "qt_version": "6.10.3",
+  "architecture": "x64"
+}

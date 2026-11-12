@@ -1,0 +1,407 @@
+"""Trusted current-2D adapter. No native work occurs on import/configuration.
+
+No public parameter accepts a DLL, HWND, pointer, PNG path, QAction name or code.
+The core must explicitly install a pinned bridge and an internal artifact root.
+"""
+from __future__ import annotations
+
+import base64
+import ctypes
+import hashlib
+import json
+import math
+from pathlib import Path
+import re
+import struct
+import sys
+import uuid
+
+from . import canvas as _base
+
+SCHEMA = "md-qt-scene-adapter/2"
+PREFIX = "mdscene1:"
+PROFILE = "bezier_handle_alt_move_v1"
+TOOLS = ("transform_pattern", "pattern_edit", "edit_curve_point")
+OUTPUT_CAPACITY = 1048576
+STATE_KEY = "_md_mcp_plugin_scene_adapter_state"
+
+
+class AdapterError(ValueError):
+    def __init__(self, code, message):
+        self.code = code
+        super().__init__(message)
+
+
+def _state():
+    value = getattr(sys, STATE_KEY, None)
+    if value is None:
+        value = {"configuration": None, "library": None, "call": None, "blocked": False}
+        setattr(sys, STATE_KEY, value)
+    return value
+
+
+def _hash(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def _params(value, required=(), optional=()):
+    if type(value) is not dict or not set(required) <= value.keys() or value.keys() - set(required) - set(optional):
+        raise AdapterError("INVALID_PARAMETERS", "Unexpected/missing fixed adapter parameter")
+
+
+def _hex(value, label):
+    if type(value) is not str or re.fullmatch(r"[0-9a-f]{64}", value) is None:
+        raise AdapterError("INVALID_PARAMETERS", label + " must be a SHA256 token")
+    return value
+
+
+def _budget(value):
+    if type(value) is not int or not 50 <= value <= 1500:
+        raise AdapterError("INVALID_PARAMETERS", "budget_ms must be an integer in [50,1500]")
+    return value
+
+
+def _xy(value):
+    if type(value) is not list or len(value) != 2 or any(type(x) not in (int, float) or not math.isfinite(x) or not 0 <= x <= 10000000 for x in value):
+        raise AdapterError("INVALID_PARAMETERS", "Finite nonnegative logical XY pairs required")
+    return [float(x) for x in value]
+
+
+def install_native_bridge(path, sha256, *, artifact_root=None):
+    """Internal bootstrap only; never an operation/tool and never loads a DLL."""
+    _hex(sha256, "sha256")
+    candidate = Path(path)
+    if not candidate.is_absolute() or candidate.name != "md_qt_scene_adapter_capture_r2_bridge.dll" or candidate.is_symlink() or not candidate.is_file() or _hash(candidate) != sha256:
+        raise AdapterError("INVALID_BRIDGE_CONFIGURATION", "One existing pinned scene-adapter DLL required")
+    root = None
+    if artifact_root is not None:
+        root = Path(artifact_root)
+        if not root.is_absolute() or root.is_symlink():
+            raise AdapterError("INVALID_ARTIFACT_ROOT", "Core must supply one absolute owned artifact directory")
+        root.mkdir(parents=True, exist_ok=True)
+        root = root.resolve(strict=True)
+        if not root.is_dir():
+            raise AdapterError("INVALID_ARTIFACT_ROOT", "Core artifact directory required")
+    configuration = {"path": str(candidate.resolve()), "sha256": sha256, "artifact_root": str(root) if root else None}
+    state = _state()
+    if state["blocked"] or state["library"] is not None and state["configuration"] != configuration:
+        raise AdapterError("BRIDGE_ALREADY_LOADED", "No hot swap or clearing uncertain execution")
+    state["configuration"] = configuration
+    return {"configured": True, "loaded": state["library"] is not None, "capture_root_configured": root is not None,
+            "sha256": sha256, "live_validation": "pending"}
+
+
+def _environment():
+    return _base._environment()
+
+
+def _scene():
+    return _base._scene()
+
+
+def _load(environment):
+    state = _state()
+    config = state["configuration"]
+    if config is None or _hash(config["path"]) != config["sha256"]:
+        raise AdapterError("BRIDGE_NOT_CONFIGURED_OR_CHANGED", "Configure the reviewed scene-adapter DLL first")
+    if state["library"] is None:
+        library = ctypes.CDLL(config["path"], winmode=0x900)
+        version = library.mdqt_scene_adapter_abi_version
+        version.argtypes, version.restype = [], ctypes.c_uint32
+        if version() != 2:
+            raise AdapterError("ABI_MISMATCH", "Scene adapter capture revision ABI2 required")
+        call = library.mdqt_scene_adapter_json
+        call.argtypes = [ctypes.c_uint32, ctypes.c_uint64, ctypes.c_char_p, ctypes.c_uint32,
+                         ctypes.c_void_p, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_uint32)]
+        call.restype = ctypes.c_int
+        state.update(library=library, call=call, loaded_process=dict(environment["process"]))
+    if state["loaded_process"] != environment["process"]:
+        raise AdapterError("PROCESS_IDENTITY_MISMATCH", "Adapter belongs to another MD process lifetime")
+    return state["call"]
+
+
+def _failure(code, message, *, unknown=False):
+    return {"status": "UNKNOWN" if unknown else "REJECTED", "result": {"verified": False, "semantic_geometry_verified": False},
+            "effects_started": unknown, "requires_recovery": unknown, "error": {"code": code, "message": message}}
+
+
+def _validate_report(raw, code, request):
+    if type(raw) is not dict or raw.get("schema") != SCHEMA or type(raw.get("return_code")) is not int or raw["return_code"] != code:
+        raise AdapterError("INVALID_NATIVE_RECEIPT", "Schema/typed return code mismatch")
+    if raw.get("status") not in ("SUCCEEDED", "REJECTED", "PARTIAL", "UNKNOWN") or any(type(raw.get(k)) is not bool for k in ("verified", "effects_started", "requires_recovery")):
+        raise AdapterError("INVALID_NATIVE_RECEIPT", "Typed native status required")
+    calls, triggers = raw.get("event_calls"), raw.get("QAction_trigger_calls")
+    if type(calls) is not int or not 0 <= calls <= 4 or type(triggers) is not int or not 0 <= triggers <= 1 or raw["effects_started"] != bool(calls or triggers):
+        raise AdapterError("INVALID_NATIVE_RECEIPT", "Actual input/trigger count mismatch")
+    operation = request["operation"]
+    mutation = operation in ("bezier_drag", "set_tool", "fit_selected", "cut_selected")
+    if not mutation and (calls or triggers) or operation != "bezier_drag" and calls:
+        raise AdapterError("INVALID_NATIVE_RECEIPT", "Unexpected input outside the fixed operation")
+    if raw["status"] != "SUCCEEDED":
+        if raw["verified"] or code == 0 or raw["effects_started"] and not raw["requires_recovery"]:
+            raise AdapterError("INVALID_NATIVE_RECEIPT", "Failed receipt contradicts effects/recovery")
+        return
+    if code != 0 or raw["operation"] != operation or not raw["verified"] or raw["requires_recovery"] or raw.get("physical_state_unchanged") is not True:
+        raise AdapterError("INVALID_NATIVE_RECEIPT", "Success lacks complete scope/readback")
+    if operation != "inspect":
+        before = raw.get("before")
+        if (type(before) is not dict or before.get("native_view_ref") != request["native_view_ref"]
+                or before.get("view_fingerprint") != request["view_fingerprint"]):
+            raise AdapterError("INVALID_NATIVE_RECEIPT", "Receipt belongs to a different current view")
+    for flag in ("semantic_geometry_verified", "native_mm_mapping_verified", "native_handle_hit_verified", "native_cut_partition_verified"):
+        if raw.get(flag) is not False:
+            raise AdapterError("INVALID_NATIVE_RECEIPT", "Adapter cannot establish " + flag)
+    if operation == "bezier_drag":
+        events = raw.get("events")
+        recipe = (("hover", 0, 0, 0), ("press", 1, 1, 0), ("move", 0, 1, 0x08000000), ("release", 1, 0, 0x08000000))
+        if calls != 4 or triggers != 0 or type(events) is not list or len(events) != 4 or raw.get("profile") != PROFILE:
+            raise AdapterError("INVALID_NATIVE_RECEIPT", "Exactly the fixed four-phase profile required")
+        for index, (row, (stage, button, buttons, modifiers)) in enumerate(zip(events, recipe)):
+            position = request["start"] if index < 2 else request["end"]
+            if (type(row) is not dict or row.get("stage") != stage or row.get("sent") is not True or row.get("returned") is not True
+                    or any(type(row.get(k)) is not int or row[k] != v for k, v in (("button", button), ("buttons", buttons), ("modifiers", modifiers)))
+                    or row.get("viewport_logical") != position):
+                raise AdapterError("INVALID_NATIVE_RECEIPT", "Phase coordinates/buttons/modifiers differ")
+        if any(raw.get(k) is not True for k in ("press_sent", "release_sent", "release_returned", "paired_release_verified", "all_events_nonspontaneous", "dispatch_completed")) or raw.get("press_outstanding") is not False:
+            raise AdapterError("INVALID_NATIVE_RECEIPT", "Closed paired release not proved")
+    elif operation == "set_tool":
+        current = raw.get("tools_after", {})
+        expected = TOOLS.index(request["tool"])
+        if calls or triggers not in (0, 1) or current.get("verified") is not True or type(current.get("current_mode")) is not int or current["current_mode"] != expected or raw.get("command_outcome_verified") is not True or raw.get("already_current") is not (triggers == 0):
+            raise AdapterError("INVALID_NATIVE_RECEIPT", "Fixed tool state not proved")
+    elif operation == "fit_selected":
+        if calls or triggers != 1 or raw.get("fit_selected_action_returned") is not True or raw.get("fit_action_name") != "actionShow_Selected_Patterns_in_Window":
+            raise AdapterError("INVALID_NATIVE_RECEIPT", "Exactly one fixed 2D Fit Selected action required")
+    elif operation == "cut_selected":
+        if calls or triggers != 1 or raw.get("selected_cut_action_returned") is not True:
+            raise AdapterError("INVALID_NATIVE_RECEIPT", "Exactly one selected Cut return required")
+    elif operation == "capture":
+        proof_flags = ("paint_event_sent", "paint_event_returned", "paint_nonspontaneous", "capture_recovery_verified",
+                       "original_Qt_context_surface_restored", "original_WGL_context_dc_restored",
+                       "original_framebuffer_bindings_restored", "source_metadata_before_after_verified",
+                       "app_GL_observed_state_unchanged", "owned_resources_cleanup_verified",
+                       "owned_name_invalidation_verified", "dual_copies_bit_exact_equal_every_pixel",
+                       "dual_baseline_owned_coverage_verified")
+        counts = {"viewport_makeCurrent_calls": 1, "direct_QPaintEvent_send_calls": 1,
+                  "owned_framebuffer_objects_created": 2, "owned_framebuffer_objects_deleted": 2,
+                  "owned_texture_objects_created": 1, "owned_texture_objects_deleted": 1,
+                  "owned_live_object_count": 0, "DSA_read_calls": 4,
+                  "DSA_baseline_read_calls": 2, "DSA_copy_read_calls": 2, "GL_owned_color_blit_calls": 2}
+        if (raw.get("capture_method") != "one_viewport_Paint_then_owned_DSA_renderbuffer_resolve_v2"
+                or any(raw.get(k) is not True for k in proof_flags)
+                or raw.get("owned_resource_cleanup_failed") is not False
+                or any(type(raw.get(k)) is not int or raw[k] != v for k, v in counts.items())
+                or raw.get("pixel_origin") != "top_left_after_CPU_vertical_flip"):
+            raise AdapterError("INVALID_NATIVE_RECEIPT", "Paint/owned resolve, dual bytes and GL restoration are required")
+        if (any(raw.get(k) is not False for k in ("GL_state_entirely_unchanged_certified",
+                    "source_object_write_freedom_certified", "pixels_freshness_verified", "pixels_scene_content_verified"))
+                or raw.get("normal_Qt_MD_draw_cache_effects_allowed") is not True
+                or any(type(raw.get(k)) is not int or raw[k] != 0 for k in
+                       ("direct_resolve_source_object_writer_calls", "new_context_calls", "new_surface_calls"))):
+            raise AdapterError("INVALID_NATIVE_RECEIPT", "Capture cannot upgrade its GL/content scope")
+    elif operation == "inspect" and raw.get("metadata_catalog_complete") is not True:
+        raise AdapterError("INVALID_NATIVE_RECEIPT", "Complete bounded metadata required")
+
+
+def _invoke(request):
+    operation = request["operation"]
+    mutation = operation in ("bezier_drag", "set_tool", "fit_selected", "cut_selected")
+    state, invoked = _state(), False
+    if state["configuration"] is None:
+        result = _failure("NATIVE_BRIDGE_NOT_CONFIGURED", "Root must configure the packaged, pinned scene adapter")
+        result["status"] = "UNSUPPORTED"
+        return result
+    if mutation and state["blocked"]:
+        return _failure("BRIDGE_RECOVERY_REQUIRED", "Previous uncertain dispatch requires root recovery")
+    try:
+        environment = _environment()
+        call = _load(environment)
+        data = _base._canonical(request).encode("utf-8")
+        if len(data) > 16384:
+            raise AdapterError("INVALID_PARAMETERS", "Native request exceeds 16KiB")
+        output = ctypes.create_string_buffer(OUTPUT_CAPACITY)
+        written, needed = ctypes.c_uint32(), ctypes.c_uint32()
+        invoked = True
+        code = call(environment["process"]["pid"], environment["process"]["creation_filetime"], data, len(data), output, len(output), ctypes.byref(written), ctypes.byref(needed))
+        if not written.value and code in (-1, -2, -3, -4):
+            return _failure("NATIVE_PREFLIGHT_REJECTED", "ABI/process/thread/busy preflight rejected before any dispatch")
+        if not 0 < written.value < len(output) or needed.value != written.value + 1:
+            raise AdapterError("INVALID_NATIVE_RECEIPT", "Missing/oversized receipt; never replay to resize")
+        raw = _base._json(output.raw[:written.value].decode("utf-8"))
+        _validate_report(raw, code, request)
+        if raw["requires_recovery"]:
+            state["blocked"] = True
+        return {"status": raw["status"], "result": raw, "error": raw.get("error"),
+                "effects_started": raw["effects_started"], "requires_recovery": raw["requires_recovery"]}
+    except Exception as exc:
+        unknown = (mutation or operation == "capture") and invoked
+        if unknown:
+            state["blocked"] = True
+        return _failure(getattr(exc, "code", "SCENE_ADAPTER_ERROR"), str(exc), unknown=unknown)
+
+
+def _encode_ref(native, token):
+    value = {"version": 1, "view": "2d", "native_view_ref": native, "scene_token": token}
+    return PREFIX + base64.urlsafe_b64encode(_base._canonical(value).encode()).decode().rstrip("=")
+
+
+def _decode_ref(text, token):
+    try:
+        if type(text) is not str or not text.startswith(PREFIX) or len(text) > 2048:
+            raise ValueError("Invalid scene reference")
+        value = text[len(PREFIX):]
+        obj = _base._json(base64.b64decode(value + "=" * (-len(value) % 4), altchars=b"-_", validate=True).decode())
+        if (type(obj) is not dict or set(obj) != {"version", "view", "native_view_ref", "scene_token"}
+                or type(obj["version"]) is not int or obj["version"] != 1 or obj["view"] != "2d" or obj["scene_token"] != token
+                or type(obj["native_view_ref"]) is not str or re.fullmatch(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", obj["native_view_ref"]) is None):
+            raise ValueError("Stale or malformed 2D scene reference")
+        return obj["native_view_ref"]
+    except (ValueError, TypeError, UnicodeError, KeyError) as exc:
+        raise AdapterError("STALE_VIEW_REFERENCE", "Use a fresh scene_adapter_inspect_2d reference") from exc
+
+
+def _publish(value, token):
+    if type(value) is not dict or value.get("view") != "2d" or type(value.get("native_view_ref")) is not str:
+        raise AdapterError("INVALID_NATIVE_RECEIPT", "Current 2D view descriptor required")
+    _hex(value.get("view_fingerprint"), "view_fingerprint")
+    result = dict(value)
+    result["view_ref"] = _encode_ref(result.pop("native_view_ref"), token)
+    _decode_ref(result["view_ref"], token)
+    return result
+
+
+def runtime_capabilities(params):
+    try:
+        _params(params)
+        state = _state()
+        return {"status": "SUCCEEDED", "result": {"configured": state["configuration"] is not None,
+                "loaded": state["library"] is not None, "blocked_until_recovery": state["blocked"],
+                "capture_root_configured": bool(state["configuration"] and state["configuration"]["artifact_root"]),
+                "qt_required": "6.10.3 release Windows x64", "live_validation": "pending",
+                "fixed_profile": PROFILE, "tools": list(TOOLS), "native_mm_mapping_verified": False,
+                "native_handle_hit_verified": False, "native_cut_partition_verified": False,
+                "DLL_loaded_by_this_probe": False}, "error": None, "effects_started": False, "requires_recovery": False}
+    except Exception as exc:
+        return _failure(getattr(exc, "code", "INVALID_PARAMETERS"), str(exc))
+
+
+def _request(operation, params):
+    extra = {"bezier_drag": {"start", "end"}, "set_tool": {"tool"}, "fit_selected": set(), "cut_selected": {"selection_fingerprint"}, "capture": set()}[operation]
+    _params(params, {"view_ref", "view_fingerprint", "scene_token"} | extra, {"budget_ms"})
+    token = _hex(params["scene_token"], "scene_token")
+    request = {"operation": operation, "budget_ms": _budget(params.get("budget_ms", 750)),
+               "native_view_ref": _decode_ref(params["view_ref"], token),
+               "view_fingerprint": _hex(params["view_fingerprint"], "view_fingerprint")}
+    if operation == "bezier_drag":
+        start, end = _xy(params["start"]), _xy(params["end"])
+        if start == end:
+            raise AdapterError("INVALID_PARAMETERS", "Nonzero logical drag required")
+        request.update(start=start, end=end, profile=PROFILE)
+    elif operation == "set_tool":
+        if type(params["tool"]) is not str or params["tool"] not in TOOLS:
+            raise AdapterError("INVALID_PARAMETERS", "Only the three fixed 2D tools exist")
+        request["tool"] = params["tool"]
+    elif operation == "cut_selected":
+        request["selection_fingerprint"] = _hex(params["selection_fingerprint"], "selection_fingerprint")
+    return request, token
+
+
+def inspect_2d(params):
+    try:
+        _params(params, optional={"budget_ms"})
+        before = _scene()
+        response = _invoke({"operation": "inspect", "budget_ms": _budget(params.get("budget_ms", 750))})
+        if response["status"] == "SUCCEEDED":
+            after = _scene()
+            if before["scene_token"] != after["scene_token"]:
+                raise AdapterError("SCENE_CHANGED_DURING_READ", "Read a stable current scene again")
+            for key in ("before", "after"):
+                response["result"][key] = _publish(response["result"][key], after["scene_token"])
+            response["result"]["scene_token"] = after["scene_token"]
+        return response
+    except Exception as exc:
+        return _failure(getattr(exc, "code", "ADAPTER_READ_FAILED"), str(exc))
+
+
+def _execute(operation, params):
+    effects = False
+    try:
+        request, token = _request(operation, params)
+        if _scene()["scene_token"] != token:
+            raise AdapterError("STALE_SCENE", "Read current scene and 2D reference again")
+        path = None
+        if operation == "capture":
+            config = _state()["configuration"]
+            if config is None or not config["artifact_root"]:
+                raise AdapterError("CORE_ARTIFACT_ROOT_REQUIRED", "Core must configure its internal capture directory")
+            configured_root = Path(config["artifact_root"])
+            if configured_root.is_symlink():
+                raise AdapterError("INVALID_ARTIFACT_ROOT", "Configured artifact root became a link")
+            root = configured_root.resolve(strict=True)
+            if root != configured_root or not root.is_dir():
+                raise AdapterError("INVALID_ARTIFACT_ROOT", "Configured artifact root changed")
+            folder = root / uuid.uuid4().hex
+            folder.mkdir(exist_ok=False)
+            path = folder / "viewport2d.png"
+            request["png_path"] = str(path)
+        response = _invoke(request)
+        effects = response["effects_started"]
+        if response["status"] != "SUCCEEDED":
+            return response
+        result = response["result"]
+        if operation == "capture":
+            image = result.get("image")
+            if (type(image) is not dict or Path(image.get("path", "")).resolve(strict=True) != path or path.is_symlink()
+                    or not 24 <= path.stat().st_size <= 67108864 or _hash(path) != image.get("sha256")):
+                raise AdapterError("INVALID_CAPTURE_ASSET", "Capture must bind exactly this internally allocated PNG")
+            data = path.read_bytes()
+            if (data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR"
+                    or struct.unpack(">II", data[16:24]) != (image.get("width"), image.get("height"))
+                    or type(image.get("byte_count")) is not int or image["byte_count"] != len(data)
+                    or image.get("view_fingerprint") != request["view_fingerprint"]
+                    or image.get("native_view_ref") != request["native_view_ref"]):
+                raise AdapterError("INVALID_CAPTURE_ASSET", "PNG header/dimensions/view/SHA do not agree")
+            image.pop("native_view_ref", None)
+            image["view_ref"] = params["view_ref"]
+        after = _scene()
+        if operation == "capture" and after["scene_token"] != token:
+            raise AdapterError("SCENE_CHANGED_DURING_READ", "Capture does not establish model preservation")
+        result["before"] = _publish(result["before"], token)
+        result["after"] = _publish(result["after"], after["scene_token"])
+        result["scene_token_after"] = after["scene_token"]
+        result["verification_scope"] = "Current public scene metadata/image or fixed dispatch/cleanup only; semantic hit, mm mapping and geometry require independent native readback"
+        result["fulfilled"] = False
+        return response
+    except Exception as exc:
+        if effects:
+            _state()["blocked"] = True
+        return _failure(getattr(exc, "code", "ADAPTER_READBACK_FAILED"), str(exc), unknown=effects)
+
+
+def capture_2d(params):
+    return _execute("capture", params)
+
+
+def bezier_drag(params):
+    return _execute("bezier_drag", params)
+
+
+def set_tool(params):
+    return _execute("set_tool", params)
+
+
+def fit_selected(params):
+    from .selection import inspect_selection
+    selected = inspect_selection({})
+    if len(selected['selected']) != 1 or selected['scene_token'] != params.get('scene_token'):
+        return _failure('SINGLE_PATTERN_SELECTION_REQUIRED', 'Select one current pattern UUID before fitting the 2D view')
+    return _execute('fit_selected', params)
+
+
+def cut_selected(params):
+    return _execute("cut_selected", params)
+
+
+OPERATIONS = {"scene_adapter.runtime_capabilities": runtime_capabilities, "scene_adapter.inspect": inspect_2d,
+              "scene_adapter.capture": capture_2d, "scene_adapter.bezier_drag": bezier_drag,
+              "scene_adapter.set_tool": set_tool, "scene_adapter.fit_selected": fit_selected, "scene_adapter.cut_selected": cut_selected}

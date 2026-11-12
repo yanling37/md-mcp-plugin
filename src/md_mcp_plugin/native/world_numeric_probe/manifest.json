@@ -1,0 +1,8 @@
+{
+  "schema": "md-mcp-packaged-world-numeric-probe/1",
+  "library": "md_qt_world_numeric_probe.dll",
+  "sha256": "88c11ca9b372a1faba6b138b40cbc37450f457ed65e8e64962a9dc69c30424c1",
+  "revision": "88c11ca9b372a1faba6b138b40cbc37450f457ed65e8e64962a9dc69c30424c1",
+  "qt_version": "6.10.3",
+  "architecture": "x64"
+}

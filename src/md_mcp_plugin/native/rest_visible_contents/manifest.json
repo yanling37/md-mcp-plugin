@@ -1,0 +1,8 @@
+{
+  "schema": "md-mcp-packaged-rest-visible-contents/1",
+  "library": "md_qt_rest_visible_contents_bridge.dll",
+  "sha256": "ca99b15e53d1edc983ff4a856932cbf447cc03e56a8c47543e89a4009c644892",
+  "revision": "ca99b15e53d1edc983ff4a856932cbf447cc03e56a8c47543e89a4009c644892",
+  "qt_version": "6.10.3",
+  "architecture": "x64"
+}

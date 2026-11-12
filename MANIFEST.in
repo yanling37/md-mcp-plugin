@@ -1,0 +1,4 @@
+include mcp.json
+include LICENSE NOTICE.md
+recursive-include tests test_*.py
+recursive-include native-build *.cpp *.inc *.h *.hpp *.py *.json *.md

@@ -1,0 +1,9 @@
+{
+  "schema": "md-mcp-packaged-cloth-meshbox-entry/1",
+  "architecture": "x64",
+  "qt_version": "6.10.3",
+  "abi": 1,
+  "library": "md_qt_cloth_meshbox_entry.dll",
+  "revision": "7c79f6c7f798e89cf9271d94d9c744abc7278e0eb2a0d59f9482a96eaaaa98a7",
+  "sha256": "7c79f6c7f798e89cf9271d94d9c744abc7278e0eb2a0d59f9482a96eaaaa98a7"
+}

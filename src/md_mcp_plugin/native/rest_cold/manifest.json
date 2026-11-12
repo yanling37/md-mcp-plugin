@@ -1,0 +1,9 @@
+{
+  "library": "md_qt_rest_cold_bridge.dll",
+  "architecture": "x64",
+  "qt_version": "6.10.3",
+  "c_abi_version": 1,
+  "schema": "md-mcp-packaged-rest-cold/1",
+  "sha256": "ede78037eddb04afb956e16cc25e9f390f5bbfb0fef3b4136a748f601c326097",
+  "revision": "ede78037eddb04afb956e16cc25e9f390f5bbfb0fef3b4136a748f601c326097"
+}

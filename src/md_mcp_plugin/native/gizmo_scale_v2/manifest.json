@@ -1,0 +1,7 @@
+{
+  "architecture": "x64",
+  "library": "md_qt_gizmo_scale_v2.dll",
+  "schema": "md-mcp-packaged-gizmo-scale/2",
+  "qt_version": "6.10.3",
+  "sha256": "d1f615152f7f3ec7535ce3c60507068bc9e2e97b63f03a0dc0860b777c5bc482"
+}
