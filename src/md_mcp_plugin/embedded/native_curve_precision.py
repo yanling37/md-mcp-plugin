@@ -113,7 +113,11 @@ def set_handle(request, adapter):
         width,height=raw['image']['viewport_size']
         if math.hypot(*pixels)>300 or not (3<=end[0]<width-3 and 3<=end[1]<height-3):
             raise StopWrite('TARGET_OUTSIDE_PRECISION_VIEW','Measured correction is outside the current viewport')
-        native('bezier_drag',adapter.bezier_drag(dict(scope_after(raw),start=list(start),end=end)))
+        drag_params = dict(scope_after(raw), start=list(start), end=end)
+        if not coarse:
+            # Leave room for the move callback and the checked release in each zoomed-in batch.
+            drag_params['budget_ms'] = 1500
+        native('bezier_drag', adapter.bezier_drag(drag_params))
         return readback(label)
 
     def finish():

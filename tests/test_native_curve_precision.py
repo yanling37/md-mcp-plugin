@@ -18,12 +18,14 @@ from md_mcp_plugin.embedded import native_curve_provider as provider
 class BoundaryFixture:
     """Explicit adapter/readback stand-ins, not native geometry certification."""
     def __init__(self, png, *, unknown=False, reach=False, drift_on_fit=False,
-                 drift_on_zoom=False, drift_on_capture=False):
+                 drift_on_zoom=False, drift_on_capture=False, partial_calibration=False):
         self.png, self.xy = png, [0., 0.]
         self.unknown, self.reach = unknown, reach
         self.drift_on_fit, self.drift_on_zoom = drift_on_fit, drift_on_zoom
         self.drift_on_capture = drift_on_capture
         self.calls, self.drag_count = [], 0
+        self.drag_budgets = []
+        self.partial_calibration = partial_calibration
         self.request = dict(pattern_uuid="paper", scene_scope={}, reference={},
                             target_xy_mm=[10., 0.], tolerance_mm=.002)
 
@@ -49,12 +51,16 @@ class BoundaryFixture:
     def bezier_drag_precise_unsnapped(self, params):
         self.calls.append("drag")
         self.drag_count += 1
+        self.drag_budgets.append(params.get("budget_ms"))
         if self.unknown:
             return dict(status="UNKNOWN", result={}, effects_started=True,
                         requires_recovery=True, error=dict(code="UNKNOWN_BATCH"))
         if self.drag_count == 1:
             self.xy = [10., 0.] if self.reach else [1., 0.]
             return self.ok(dict(paired_release_verified=True), effects=True)
+        if self.partial_calibration:
+            return dict(status="PARTIAL", result=dict(paired_release_verified=True), effects_started=True,
+                        requires_recovery=True, error=dict(code="COOPERATIVE_BUDGET_EXCEEDED"))
         raise precision.StopWrite("TEST_STOP", "Stop before any calibration dispatch")
 
     # Trusted adapter boundaries use the same explicit fault callback here;
@@ -164,6 +170,16 @@ class PrecisionTests(unittest.TestCase):
         self.assertEqual("after_stopped_fit_restoration", result["trace"][-1]["stage"])
         self.assertEqual("TEST_STOP", result["error"]["code"])
         self.assertEqual(2, f.drag_count)
+        self.assertEqual([None, 1500], f.drag_budgets)
+
+    def test_larger_precision_budget_does_not_accept_a_partial_batch(self):
+        f = BoundaryFixture(self.png, partial_calibration=True)
+        result = f.run()
+        self.assertEqual([None, 1500], f.drag_budgets)
+        self.assertEqual("PARTIAL", result["status"])
+        self.assertTrue(result["requires_recovery"])
+        self.assertFalse(result["closed_input_batch_verified"])
+        self.assertNotIn("fit", f.calls)
 
     def test_zoom_target_only_change_stops_before_calibration(self):
         f = BoundaryFixture(self.png, drift_on_zoom=True)
