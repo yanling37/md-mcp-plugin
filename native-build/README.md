@@ -28,3 +28,25 @@ python -m pip install ./local-install
 The staging step preserves the package’s native manifest schema and writes the exact built SHA-256 values in both the manifests and the affected hard pins in the new tree. Use the resulting package in a fresh MD session when switching native cohorts.
 
 The distribution input is this source directory, the build script and release recipes. Use separate directories for locally built DLLs and logs. Qt and Microsoft licensing applies to their respective SDK and runtime components. Review the applicable terms before any separate binary distribution. [Qt licensing obligations](https://www.qt.io/development/open-source-lgpl-obligations)
+
+## Build only the curve workflow
+
+The Bézier handle example uses two native bridges. `scene_adapter` prepares the 2D view and performs the edit. `canvas` verifies that background input is closed before recovery. Use the same Windows SDK, MSVC and Qt settings as for a full build.
+
+```powershell
+python -B build_bridges.py `
+  --recipes release-recipes.json `
+  --out build-curve `
+  --qt-sdk $env:QT_6103_SDK `
+  --vc $env:MSVC_TOOLS_DIR `
+  --windows-kits $env:WINDOWS_KITS_DIR `
+  --runtime-qt $env:MD_QT_RUNTIME `
+  --target scene_adapter `
+  --target canvas
+if ($LASTEXITCODE) { throw 'Curve bridge build failed' }
+python -B stage_local_install.py --build build-curve --out local-install-curve --profile curve
+if ($LASTEXITCODE) { throw 'Curve bridge staging failed' }
+python -m pip install ./local-install-curve
+```
+
+Use this installation for curve editing and saved-project recovery. For other native operations, use the full build above. Use a fresh Python environment and a fresh MD session when switching between install profiles.

@@ -2,6 +2,8 @@
 
 A local stdio MCP server for AI clients working with Marvelous Designer. It uses a loopback listener in MD and returns structured receipts for inspection, editing, verification, and recovery.
 
+Start with the [Bézier quick start](docs/bezier-quickstart.md). It covers the minimal native install, a single sample panel, and an edit you can save, reopen, and measure.
+
 ## Requirements
 
 - Python 3.11 or later for the MCP server.
