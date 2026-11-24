@@ -400,10 +400,23 @@ QImage capture(const Scope& scope, const Canvas& canvas, Budget& budget,
     OwnedResources resources(target, target_surface, get_rc, get_dc, gl, own);
     bool source_observed = false, stores_observed = false, source_same = false, gl_state_same = false;
     SourceInfo source; PixelStore pack, unpack; GLint initial_read = -1, initial_draw = -1;
-    const auto stable = [&]() {
-        require(receiverAlive(scope, canvas) && target && target_lifetime && canvas.viewport->context() == target
-            && samePhysical(physical_before, physical(scope))
-            && view_before.value("mapping_fingerprint") == snapshot(scope, canvas).value("mapping_fingerprint"), "CAPTURE_VIEW_OR_PHYSICAL_CHANGED");
+    const auto stable = [&](const char* stage) {
+        const auto reject = [&](const char* reason, QJsonObject observed) {
+            observed.insert("stage", stage);
+            observed.insert("reason", reason);
+            report.insert("capture_guard_failure", observed);
+            throw Reject{"CAPTURE_VIEW_OR_PHYSICAL_CHANGED"};
+        };
+        if (!receiverAlive(scope, canvas))
+            reject("RECEIVER_CHANGED", {{"receiver_valid", false}});
+        if (!target || !target_lifetime || canvas.viewport->context() != target)
+            reject("GL_CONTEXT_CHANGED", {{"receiver_valid", true}, {"gl_context_unchanged", false}});
+        if (!samePhysical(physical_before, physical(scope)))
+            reject("PHYSICAL_CHANGED", {{"receiver_valid", true}, {"gl_context_unchanged", true},
+                                        {"physical_unchanged", false}});
+        if (view_before.value("mapping_fingerprint") != snapshot(scope, canvas).value("mapping_fingerprint"))
+            reject("MAPPING_CHANGED", {{"receiver_valid", true}, {"gl_context_unchanged", true},
+                                       {"physical_unchanged", true}, {"mapping_unchanged", false}});
     };
     const auto finish = [&]() {
         resources.cleanup();
@@ -443,8 +456,9 @@ QImage capture(const Scope& scope, const Canvas& canvas, Budget& budget,
         ownershipReport(report, own);
     };
     try {
-        budget.check(); stable(); started = true; context_guard.beginAttempt(); ++paint.make_calls; canvas.viewport->makeCurrent();
-        stable(); require(resources.current() == false, "INTERNAL_RESOURCE_PAIR_NOT_ARMED_EXPECTED");
+        budget.check(); stable("before_make_current");
+        started = true; context_guard.beginAttempt(); ++paint.make_calls; canvas.viewport->makeCurrent();
+        stable("after_make_current"); require(resources.current() == false, "INTERNAL_RESOURCE_PAIR_NOT_ARMED_EXPECTED");
         require(target && target_lifetime && QOpenGLContext::currentContext() == target && target->surface() == target_surface
             && get_rc() == target_rc && get_dc(), "VIEWPORT_MAKECURRENT_TARGET_MISMATCH");
         const HDC target_dc = get_dc(); resources.armPair(target_rc, target_dc);
@@ -453,13 +467,13 @@ QImage capture(const Scope& scope, const Canvas& canvas, Budget& budget,
         require(draw >= 0 && read >= 0 && GLuint(draw) == source_fbo && GLuint(read) == source_fbo
             && gl.is_framebuffer(source_fbo) == GL_TRUE && canvas.viewport->defaultFramebufferObject() == source_fbo
             && !canvas.viewport->paintingActive(), "VIEWPORT_DEFAULT_FBO_NOT_BOUND_FOR_PAINT");
-        budget.check(); stable(); QPaintEvent event(QRect(QPoint(0, 0), canvas.viewport->size())); event.setAccepted(false);
+        budget.check(); stable("before_paint"); QPaintEvent event(QRect(QPoint(0, 0), canvas.viewport->size())); event.setAccepted(false);
         paint.nonspontaneous = !event.spontaneous(); require(paint.nonspontaneous, "NONSPONTANEOUS_PAINT_REQUIRED");
         paint.sent = true; ++paint.send_calls;
         try { paint.send_return = QCoreApplication::sendEvent(canvas.viewport, &event); paint.returned = true;
             paint.accepted = event.isAccepted(); paint.nonspontaneous = paint.nonspontaneous && !event.spontaneous(); }
         catch (...) { paint.cpp_exception = true; throw; }
-        stable(); require(resources.current() && paint.returned && paint.nonspontaneous && !canvas.viewport->paintingActive()
+        stable("after_paint"); require(resources.current() && paint.returned && paint.nonspontaneous && !canvas.viewport->paintingActive()
             && canvas.viewport->defaultFramebufferObject() == source_fbo, "POST_PAINT_SCOPE_CHANGED");
         require(source.read(gl, source_fbo, [&]() { return resources.current(); }), "SOURCE_QUERY_CONTEXT_CHANGED");
         source_observed = true; source.report(report);
@@ -474,8 +488,8 @@ QImage capture(const Scope& scope, const Canvas& canvas, Budget& budget,
         gl.integer(GL_READ_FRAMEBUFFER_BINDING, &initial_read); gl.integer(GL_DRAW_FRAMEBUFFER_BINDING, &initial_draw);
         require(pack.safe() && unpack.safe(), "PACK_UNPACK_STATE_UNSUPPORTED");
         report.insert("pack_before", pack.json()); report.insert("unpack_before", unpack.json());
-        const auto blit_guard = [&]() {
-            stable(); require(resources.current(), "RESOLVE_CONTEXT_CHANGED");
+        const auto blit_guard = [&](const char* stage) {
+            stable(stage); require(resources.current(), "RESOLVE_CONTEXT_CHANGED");
             GLint enabled = -1, box[4]{-1,-1,-1,-1}, origin = -1, srgb = -1;
             gl.integer(GL_SCISSOR_TEST, &enabled); gl.integer(GL_SCISSOR_BOX, box);
             gl.integer(GL_CLIP_ORIGIN, &origin); gl.integer(GL_FRAMEBUFFER_SRGB, &srgb);
@@ -501,7 +515,8 @@ QImage capture(const Scope& scope, const Canvas& canvas, Budget& budget,
         const std::size_t stride = (std::size_t(width) * 4 + pack.alignment - 1) / pack.alignment * pack.alignment;
         const std::size_t bytes = stride * height; require(bytes <= 67108864, "OWNED_RESOLVE_SCRATCH_LIMIT");
         std::vector<unsigned char> first(bytes, 0), work(bytes, 0);
-        budget.check(); blit_guard(); ++own.create_calls; gl.create_framebuffers(2, resources.framebuffers); resources.sync();
+        budget.check(); blit_guard("before_owned_allocation"); ++own.create_calls;
+        gl.create_framebuffers(2, resources.framebuffers); resources.sync();
         require(resources.current(), "CONTEXT_CHANGED_AFTER_FBO_CREATE");
         ++own.create_calls; gl.create_textures(GL_TEXTURE_2D, 1, &resources.texture); resources.sync();
         require(resources.current() && resources.framebuffers[0] && resources.framebuffers[1]
@@ -522,20 +537,20 @@ QImage capture(const Scope& scope, const Canvas& canvas, Budget& budget,
         require(resources.current() && gl.check_framebuffer(resources.framebuffers[0], GL_READ_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE
             && gl.check_framebuffer(resources.framebuffers[1], GL_DRAW_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "OWNED_FRAMEBUFFER_INCOMPLETE");
         const auto clear_owned = [&](const void* data) {
-            budget.check(); stable(); require(resources.current(), "OWNED_CLEAR_CONTEXT_CHANGED");
+            budget.check(); stable("before_owned_clear"); require(resources.current(), "OWNED_CLEAR_CONTEXT_CHANGED");
             PixelStore current; current.read(gl.integer, true); require(unpack.same(current) && current.safe(), "UNPACK_CHANGED");
             require(!compatibility || (gl.enabled(GL_HISTOGRAM) == GL_FALSE && gl.enabled(GL_MINMAX) == GL_FALSE), "COMPAT_IMAGING_CHANGED");
             ++own.clear_calls; gl.clear(resources.texture, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
             require(resources.current(), "CONTEXT_CHANGED_AFTER_OWN_CLEAR");
         };
         const auto read_owned = [&](std::vector<unsigned char>& buffer, bool baseline) {
-            budget.check(); stable(); require(resources.current(), "OWNED_READ_CONTEXT_CHANGED");
+            budget.check(); stable("before_owned_read"); require(resources.current(), "OWNED_READ_CONTEXT_CHANGED");
             PixelStore current; current.read(gl.integer, false); require(pack.same(current) && current.safe(), "PACK_CHANGED");
             ++own.read_calls; if (baseline) ++own.baseline_reads; else ++own.copy_reads;
             gl.image(resources.texture, 0, GL_RGBA, GL_UNSIGNED_BYTE, GLsizei(bytes), buffer.data());
             current.read(gl.integer, false); require(resources.current() && pack.same(current), "CONTEXT_OR_PACK_CHANGED_AFTER_READ");
         };
-        const auto blit = [&]() { budget.check(); blit_guard(); ++own.blit_calls;
+        const auto blit = [&]() { budget.check(); blit_guard("before_owned_blit"); ++own.blit_calls;
             gl.blit(resources.framebuffers[0], resources.framebuffers[1], 0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
             require(resources.current(), "CONTEXT_CHANGED_AFTER_OWN_BLIT"); };
         clear_owned(nullptr); read_owned(work, true);
@@ -558,7 +573,7 @@ QImage capture(const Scope& scope, const Canvas& canvas, Budget& budget,
         report.insert("dual_copies_bit_exact_equal_every_pixel", true);
         report.insert("dual_baseline_owned_coverage_verified", true);
         report.insert("pixel_origin", "top_left_after_CPU_vertical_flip");
-        finish(); stable(); require(own.cleanup_verified && !own.cleanup_failed && own.live == 0
+        finish(); stable("after_cleanup"); require(own.cleanup_verified && !own.cleanup_failed && own.live == 0
             && !restored.failed && paint.bindings_restored && !paint.binding_failed && source_same && gl_state_same,
             "CAPTURE_GL_CLEANUP_OR_RESTORATION_UNVERIFIED");
         report.insert("capture_recovery_verified", true); return result;

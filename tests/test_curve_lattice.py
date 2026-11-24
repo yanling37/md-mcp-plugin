@@ -16,13 +16,13 @@ def columns(gain, angle=.0):
 
 
 class LatticeTests(unittest.TestCase):
-    def assert_valid_plan(self, plan, fine, coarse, delta, tolerance=.002):
+    def assert_valid_plan(self, plan, fine, coarse, delta, tolerance=.002, budget_fraction=.5):
         m, n = plan['coarse_steps_px'], plan['fine_steps_px']
         self.assertTrue(all(type(v) is int and abs(v) <= plan['max_step'] for v in m+n))
         actual = [sum(Fraction(coarse[i][a])*m[i] + Fraction(fine[i][a])*n[i]
                       for i in (0, 1)) for a in (0, 1)]
         error2 = sum((v-Fraction(d))**2 for v, d in zip(actual, delta))
-        self.assertLessEqual(error2, (Fraction(tolerance)/2)**2)
+        self.assertLessEqual(error2, (Fraction(tolerance)*Fraction(str(budget_fraction)))**2)
         self.assertEqual(Fraction(plan['predicted_error_squared_mm2_exact']), error2)
         self.assertFalse(plan['native_dispatch_authorized'])
         self.assertFalse(plan['native_owner_binding_verified'])
@@ -79,6 +79,27 @@ class LatticeTests(unittest.TestCase):
 
         with self.assertRaises(LatticeError):
             plan_two_scales(fine, coarse, [.0015, 0.], prediction_budget_fraction=.9)
+
+    def test_full_budget_prefers_the_smallest_error_for_recorded_scale_pair(self):
+        fine = [[.01531416666666748, 0.], [0., -.015312083333332302]]
+        coarse = [[.02143916666666712, 0.], [0., -.021438750000001505]]
+        delta = [-.056709999999981164, -.032330000000001746]
+        for budget in (.5, .85):
+            with self.subTest(budget=budget), self.assertRaises(LatticeError) as caught:
+                plan_two_scales(fine, coarse, delta, min_batch_length_px=16, prediction_budget_fraction=budget)
+            self.assertEqual('LATTICE_TARGET_UNREACHABLE', caught.exception.code)
+
+        plan = plan_two_scales(fine, coarse, delta, min_batch_length_px=16, prediction_budget_fraction=1.0)
+        self.assert_valid_plan(plan, fine, coarse, delta, budget_fraction=1.0)
+        self.assertEqual([-22, -17], plan['coarse_steps_px'])
+        self.assertEqual([27, 26], plan['fine_steps_px'])
+        self.assertAlmostEqual(.0019786813878436152, plan['predicted_error_mm'])
+        self.assertFalse(plan['execution_verified'])
+
+    def test_full_prediction_budget_still_rejects_error_above_tolerance(self):
+        with self.assertRaises(LatticeError) as caught:
+            plan_two_scales(columns(.02), columns(.04), [.002001, 0.], prediction_budget_fraction=1.0)
+        self.assertEqual('LATTICE_TARGET_UNREACHABLE', caught.exception.code)
 
     def test_nonfinite_pathological_rotation_and_step_budgets_reject(self):
         bad = [([[float('nan'), 0.], [0., .01]], columns(.02), [0., 0.], {}),

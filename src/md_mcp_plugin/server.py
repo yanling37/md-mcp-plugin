@@ -50,6 +50,16 @@ def create_server(config=None, context=None, features=FEATURES):
         return context.recover_curve_operation(blocked_request_id, request_id, scene_token, expected_source_sha256)
 
     @mcp.tool()
+    def md_reconcile_released_curve_drag(blocked_request_id: str, request_id: str, scene_token: str, expected_source_sha256: str) -> dict:
+        """Verify the exact completed four-event curve drag and replace the retired native bridge in the same MD process.
+
+        Requires the original partial receipt, independently confirmed target and scene, and saved source SHA.
+        Keeps the open geometry and the original request receipt. Never repeats the drag, reopens, or saves the project.
+        If the reply is missing, query md_operation_status with this recovery request ID.
+        """
+        return context.reconcile_released_curve_drag(blocked_request_id, request_id, scene_token, expected_source_sha256)
+
+    @mcp.tool()
     def md_recover_cut_operation(blocked_request_id: str, request_id: str, scene_token: str, expected_source_sha256: str) -> dict:
         """Reload the same saved project after a completed Cut with partial verification.
 

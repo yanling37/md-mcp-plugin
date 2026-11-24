@@ -9,7 +9,7 @@ import time
 import uuid
 
 from .errors import PluginError
-from .embedded import cloth_position_recovery as cloth_position
+from .embedded import cloth_position_recovery as cloth_position, curve_release_recovery as curve_release
 
 CLOTH_REST = 'cloth.rest_shape'
 CLOTH_REST_RECONCILE = 'cloth.reconcile_rest_archive'
@@ -88,6 +88,8 @@ class Journal:
 
     def finish(self, request_id, receipt):
         record = self.get(request_id)
+        if record['operation'] == curve_release.RECOVERY:
+            return self._finish_curve_release_recovery(request_id, receipt)
         if record['operation'] == cloth_position.RECOVERY and receipt['status'] == 'SUCCEEDED':
             return self._finish_cloth_position_recovery(request_id, record, receipt)
         if record['operation'] == WORLD_ROTATION_RECONCILE and receipt['status'] == 'SUCCEEDED':
@@ -162,9 +164,14 @@ class Journal:
 
     @contextmanager
     def _rest_reconcile_finalization(self):
+        with self._reconciliation_lock('rest-reconcile.guard'):
+            yield
+
+    @contextmanager
+    def _reconciliation_lock(self, name):
         # The OS releases this lock on process exit. A second reconciler can
         # never delete a new mutation lease while completing the old parent.
-        with (self.root / 'rest-reconcile.guard').open('a+b') as stream:
+        with (self.root / name).open('a+b') as stream:
             stream.seek(0)
             if os.name == 'nt':
                 import msvcrt
@@ -181,6 +188,112 @@ class Journal:
                     msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
                 else:
                     fcntl.flock(stream, fcntl.LOCK_UN)
+
+    @staticmethod
+    def _curve_release_parent(parent, parent_id):
+        if (type(parent) is not dict or parent.get('request_id') != parent_id or parent.get('operation_id') != parent_id
+                or parent.get('operation') != curve_release.WRITE or parent.get('status') != 'PARTIAL'
+                or not curve_release.is_sha256(parent.get('scene_token')) or type(parent.get('params')) is not dict):
+            raise ValueError('Original partial curve request did not match')
+        payload = {key: parent[key] for key in ('operation', 'params', 'scene_token')}
+        expected = hashlib.sha256(encoded(payload).encode()).hexdigest()
+        original = parent.get('receipt')
+        if (parent.get('fingerprint') != expected or type(original) is not dict
+                or parent.get('result') != original.get('result') or parent.get('error') != original.get('error')):
+            raise ValueError('Original curve payload or receipt no longer matches its sealed request')
+        return curve_release.released_curve_drag_proof(original, parent_id, original_params=parent['params'])
+
+    def _claim_curve_release_recovery(self, request_id, parent_id, payload, fingerprint, path):
+        params = payload['params']
+        if (request_id == parent_id or set(params) != {'blocked_request_id', 'expected_source_sha256'}
+                or params.get('blocked_request_id') != parent_id or not curve_release.is_sha256(params.get('expected_source_sha256'))
+                or not curve_release.is_sha256(payload['scene_token'])):
+            raise PluginError('RECOVERY_NOT_APPLICABLE', 'A distinct recovery ID, current scene token and source SHA are required')
+        with self._reconciliation_lock('curve-release-reconcile.guard'):
+            if path.exists():
+                existing = self.get(request_id)
+                if existing.get('fingerprint') != fingerprint:
+                    raise PluginError('REQUEST_ID_REUSED', 'Recovery ID identifies different parameters')
+                return existing, False
+            parent = self.get(parent_id)
+            try:
+                self._curve_release_parent(parent, parent_id)
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise PluginError('RECOVERY_NOT_APPLICABLE', str(exc)) from exc
+            if not self._matching_lease(parent_id, curve_release.WRITE):
+                raise PluginError('RECOVERY_LEASE_MISMATCH', 'This unresolved curve operation must own the mutation lease')
+            if parent.get('recovery') is not None:
+                raise PluginError('RECOVERY_NOT_APPLICABLE', 'The curve receipt already has a verified recovery')
+            prior_id = parent.get('curve_release_recovery_request_id')
+            if prior_id is not None:
+                prior = self.get(prior_id)
+                receipt = prior.get('receipt') or {}
+                if not (prior.get('status') in ('FAILED', 'REJECTED', 'UNSUPPORTED')
+                        and receipt.get('effects_started') is False and receipt.get('requires_recovery') is False):
+                    raise PluginError('RECOVERY_PENDING', 'Read the existing curve recovery request before attempting another',
+                                      request_id=prior_id)
+            record = {'request_id': request_id, 'operation_id': request_id, 'fingerprint': fingerprint, **payload,
+                      'status': 'PENDING', 'result': None, 'error': None, 'recovery_for': parent_id,
+                      'original_request_fingerprint': parent['fingerprint']}
+            with path.open('x', encoding='utf8') as stream:
+                stream.write(encoded(record))
+            parent['curve_release_recovery_request_id'] = request_id
+            self._write_record(parent_id, parent)
+            return record, True
+
+    def _finish_curve_release_recovery(self, request_id, receipt):
+        with self._reconciliation_lock('curve-release-reconcile.guard'):
+            record = self.get(request_id)
+            parent_id = record['recovery_for']
+            parent = self.get(parent_id)
+            linked = {'request_id': request_id, 'status': curve_release.REPLACED, 'original_status': 'PARTIAL'}
+            has_lease = self._matching_lease(parent_id, curve_release.WRITE)
+            if parent.get('recovery') == linked and record['status'] == 'SUCCEEDED' and not has_lease:
+                return record
+            result = receipt.get('result')
+            error = receipt.get('error')
+            status = receipt['status']
+            if status == 'SUCCEEDED':
+                try:
+                    proof = self._curve_release_parent(parent, parent_id)
+                except (TypeError, ValueError, OverflowError):
+                    proof = None
+                valid = (proof is not None and has_lease and parent.get('recovery') in (None, linked)
+                         and parent.get('curve_release_recovery_request_id') == request_id
+                         and parent['fingerprint'] == record.get('original_request_fingerprint')
+                         and receipt.get('operation_id') == request_id and receipt.get('requires_recovery') is False
+                         and error is None and type(result) is dict and result.get('recovered_operation_id') == parent_id
+                         and result.get('recovery_action') == curve_release.REPLACED
+                         and result.get('source_sha256') == record['params']['expected_source_sha256']
+                         and result.get('scene_token') == record['scene_token']
+                         and result.get('native_fingerprints') == proof['native_fingerprints']
+                         and encoded(result.get('target_xy_mm')) == encoded(proof['target_xy_mm'])
+                         and all(result.get(key) is True for key in ('verified', 'native_scene_unchanged',
+                                                                    'old_bridge_retired', 'successor_bridge_verified'))
+                         and self._curve_successor_attested(result))
+                if not valid:
+                    status, result = 'UNKNOWN', None
+                    error = {'code': 'CURVE_RELEASE_RECOVERY_RECEIPT_NOT_VERIFIED',
+                             'message': 'Bridge replacement could not be bound to the exact partial curve receipt and lease'}
+            record.update(status=status, result=result, error=error, receipt=receipt)
+            self._write_record(request_id, record)
+            if status == 'SUCCEEDED':
+                parent['recovery'] = linked
+                self._write_record(parent_id, parent)
+                if self._matching_lease(parent_id, curve_release.WRITE):
+                    self.lease.unlink()
+            return record
+
+    @staticmethod
+    def _curve_successor_attested(result):
+        process = result.get('process_identity')
+        old = result.get('predecessor_bridge_sha256')
+        new = result.get('successor_bridge_sha256')
+        epoch = result.get('native_successor_epoch')
+        return (type(process) is dict and set(process) == {'pid', 'creation_filetime'}
+                and all(type(value) is int and value > 0 for value in process.values())
+                and curve_release.is_sha256(old) and curve_release.is_sha256(new) and old != new
+                and type(epoch) is int and epoch == 1)
 
     def _finish_rest_reconcile(self, request_id, record, receipt):
         parent_id = record['params']['blocked_request_id']
@@ -668,6 +781,7 @@ class Journal:
     def claim_recovery(self, request_id, blocked_id, params, scene_token, *, operation='project.recover_curve'):
         parents={'project.recover_curve':'curves.set_handles',
                  'project.recover_cut':'cut_qt.execute',
+                 curve_release.RECOVERY:curve_release.WRITE,
                  cloth_position.RECOVERY:cloth_position.WRITE,
                  CLOTH_REST_RECONCILE:CLOTH_REST,
                  WORLD_ROTATION_RECONCILE:WORLD_ROTATION,
@@ -680,6 +794,8 @@ class Journal:
         path = self._path(request_id)
         payload = {'operation': operation, 'params': params, 'scene_token': scene_token}
         fingerprint = hashlib.sha256(encoded(payload).encode()).hexdigest()
+        if operation == curve_release.RECOVERY:
+            return self._claim_curve_release_recovery(request_id, blocked_id, payload, fingerprint, path)
         if path.exists():
             record = self.get(request_id)
             if record['fingerprint'] != fingerprint:

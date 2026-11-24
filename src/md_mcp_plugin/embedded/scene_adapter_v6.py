@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import base64
 import ctypes
+from ctypes import wintypes
 import hashlib
 import json
 import math
@@ -77,8 +78,7 @@ def _xy(value):
     return [float(x) for x in value]
 
 
-def install_native_bridge(path, sha256, *, artifact_root=None):
-    """Internal bootstrap only; never an operation/tool and never loads a DLL."""
+def _configuration(path, sha256, *, artifact_root=None):
     _hex(sha256, "sha256")
     candidate = Path(path)
     if not candidate.is_absolute() or candidate.name != "md_qt_scene_adapter_v6_bridge.dll" or candidate.is_symlink() or not candidate.is_file() or _hash(candidate) != sha256:
@@ -92,12 +92,18 @@ def install_native_bridge(path, sha256, *, artifact_root=None):
         root = root.resolve(strict=True)
         if not root.is_dir():
             raise AdapterError("INVALID_ARTIFACT_ROOT", "Core artifact directory required")
-    configuration = {"path": str(candidate.resolve()), "sha256": sha256, "artifact_root": str(root) if root else None}
+    return {"path": str(candidate.resolve()), "sha256": sha256, "artifact_root": str(root) if root else None}
+
+
+def install_native_bridge(path, sha256, *, artifact_root=None):
+    """Internal bootstrap only; never an operation/tool and never loads a DLL."""
+    configuration = _configuration(path, sha256, artifact_root=artifact_root)
     state = _state()
     if state["blocked"] or state["library"] is not None and state["configuration"] != configuration:
         raise AdapterError("BRIDGE_ALREADY_LOADED", "No hot swap or clearing uncertain execution")
     state["configuration"] = configuration
-    return {"configured": True, "loaded": state["library"] is not None, "capture_root_configured": root is not None,
+    return {"configured": True, "loaded": state["library"] is not None,
+            "capture_root_configured": configuration["artifact_root"] is not None,
             "sha256": sha256, "live_validation": "pending"}
 
 
@@ -109,8 +115,7 @@ def _scene():
     return _base._scene()
 
 
-def _load(environment):
-    state = _state()
+def _load(environment, state):
     config = state["configuration"]
     if config is None or _hash(config["path"]) != config["sha256"]:
         raise AdapterError("BRIDGE_NOT_CONFIGURED_OR_CHANGED", "Configure the reviewed scene-adapter DLL first")
@@ -361,10 +366,12 @@ def _validate_report(raw, code, request):
         raise AdapterError("INVALID_NATIVE_RECEIPT", "Complete bounded metadata required")
 
 
-def _invoke(request):
+def _invoke(request, *, inspection_state=None):
     operation = request["operation"]
     mutation = operation in ("bezier_drag", "bezier_drag_unsnapped", "bezier_drag_precise_unsnapped", "set_tool", "fit_selected", "fit_all", "zoom_in_at", "zoom_out_at", "cut_selected")
-    state, invoked = _state(), False
+    if inspection_state is not None and operation != "inspect":
+        raise AdapterError("INSPECTION_REQUIRED", "An uncommitted bridge can only inspect the current owner")
+    state, invoked = (inspection_state if inspection_state is not None else _state()), False
     if state["configuration"] is None:
         result = _failure("NATIVE_BRIDGE_NOT_CONFIGURED", "Root must configure the packaged, pinned scene adapter")
         result["status"] = "UNSUPPORTED"
@@ -373,7 +380,7 @@ def _invoke(request):
         return _failure("BRIDGE_RECOVERY_REQUIRED", "Previous uncertain dispatch requires root recovery")
     try:
         environment = _environment()
-        call = _load(environment)
+        call = _load(environment, state)
         data = _base._canonical(request).encode("utf-8")
         if len(data) > 16384:
             raise AdapterError("INVALID_PARAMETERS", "Native request exceeds 16KiB")
@@ -396,6 +403,69 @@ def _invoke(request):
         if unknown:
             state["blocked"] = True
         return _failure(getattr(exc, "code", "SCENE_ADAPTER_ERROR"), str(exc), unknown=unknown)
+
+
+def _loaded_library_path(library):
+    kernel = ctypes.WinDLL("kernel32.dll", use_last_error=True, winmode=0x800)
+    read_path = kernel.GetModuleFileNameW
+    read_path.argtypes = [wintypes.HMODULE, wintypes.LPWSTR, wintypes.DWORD]
+    read_path.restype = wintypes.DWORD
+    buffer = ctypes.create_unicode_buffer(32768)
+    if not 0 < read_path(library._handle, buffer, len(buffer)) < len(buffer):
+        raise AdapterError("LOADED_MODULE_PATH_UNAVAILABLE", "Cannot identify the loaded scene adapter")
+    return str(Path(buffer.value).resolve(strict=True))
+
+
+def _closed_drag_view(inspection):
+    result = inspection.get("result") or {}
+    view = result.get("after") or {}
+    tools = result.get("tools_after") or {}
+    selected = result.get("selection_after") or {}
+    if (inspection.get("status") != "SUCCEEDED" or inspection.get("effects_started") is not False
+            or (result.get("physical_after") or {}).get("background_safe") is not True
+            or view.get("scene_item_grabber_absent") is not True or view.get("view") != "2d"
+            or tools.get("current_tool") != "edit_curve_point" or type(selected.get("selected_items_count")) is not int):
+        raise AdapterError("RELEASED_CURVE_VIEW_NOT_VERIFIED", "Current 2D edit owner and released input could not be verified")
+    # View and selection identifiers incorporate a per-library view token.
+    return (view["mapping_fingerprint"], view["selector_chain"], view["viewport"],
+            view["scene"], view["scene_rect"], tools, selected["selected_items_count"])
+
+
+def prepare_closed_drag_successor(package):
+    old = _state()
+    environment = _environment()
+    config = _configuration(**package)
+    current = old["configuration"]
+    if (old["blocked"] is not True or old["library"] is None or current is None
+            or old["loaded_process"] != environment["process"] or config["sha256"] == current["sha256"]
+            or config["path"] == current["path"] or config["artifact_root"] != current["artifact_root"]
+            or _loaded_library_path(old["library"]) != current["path"]):
+        raise AdapterError("SUCCESSOR_NOT_ELIGIBLE", "A blocked, loaded predecessor and distinct installed build are required")
+    probe = {"operation": "inspect", "budget_ms": 1500}
+    before = _closed_drag_view(_invoke(probe))
+    successor = {"configuration": config, "library": None, "call": None, "blocked": False}
+    _load(environment, successor)
+    library = successor["library"]
+    if (library._handle == old["library"]._handle or _loaded_library_path(library) != config["path"]
+            or ctypes.cast(successor["call"], ctypes.c_void_p).value == ctypes.cast(old["call"], ctypes.c_void_p).value):
+        raise AdapterError("SUCCESSOR_MODULE_NOT_DISTINCT", "Windows must load a distinct pinned native module")
+    epoch = library.mdqt_scene_adapter_recovery_epoch
+    epoch.argtypes, epoch.restype = [], ctypes.c_uint32
+    if epoch() != 1:
+        raise AdapterError("SUCCESSOR_ABI_UNAVAILABLE", "The packaged successor must support released-drag recovery epoch 1")
+    if _closed_drag_view(_invoke(probe, inspection_state=successor)) != before:
+        raise AdapterError("SUCCESSOR_VIEW_CHANGED", "The predecessor and successor must observe the same released 2D edit owner")
+    evidence = {"predecessor_bridge_sha256": current["sha256"], "successor_bridge_sha256": config["sha256"],
+                "native_successor_epoch": 1, "successor_bridge_verified": True}
+    return old, successor, evidence
+
+
+def adopt_closed_drag_successor(old, successor):
+    if _state() is not old or old["blocked"] is not True or old["loaded_process"] != successor["loaded_process"]:
+        raise AdapterError("BRIDGE_SCOPE_CHANGED", "The original blocked bridge must still own the routing state")
+    # The predecessor stays loaded and blocked. No queued native call is replayed.
+    successor["retired"] = (*old.get("retired", ()), old["library"])
+    setattr(sys, STATE_KEY, successor)
 
 
 def _encode_ref(native, token):

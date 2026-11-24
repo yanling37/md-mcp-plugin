@@ -258,10 +258,7 @@ def describe_native(native: dict, pattern_uuid: str, *, scene_scope=None) -> dic
     return _analyse(native, pattern_uuid, scene_scope)["public"]
 
 
-def prepare_edit(native: dict, pattern_uuid: str, handle_ref: str, target_xy_mm,
-                 *, tolerance_mm: float = .002, scene_scope=None) -> dict:
-    target_xy = _xy(target_xy_mm, "target_xy_mm")
-    tolerance = _tolerance(tolerance_mm)
+def _reference_identity(handle_ref):
     if type(handle_ref) is not str or not handle_ref.startswith(_PREFIX) or len(handle_ref) > 4096:
         raise CurveError("INVALID_REFERENCE", "Use a handle_ref returned by curves.inspect")
     try:
@@ -271,6 +268,14 @@ def prepare_edit(native: dict, pattern_uuid: str, handle_ref: str, target_xy_mm,
         raise CurveError("INVALID_REFERENCE", "Malformed handle_ref") from exc
     if type(identity) is not dict or set(identity) != _REF_KEYS or identity.get("version") != 2:
         raise CurveError("INVALID_REFERENCE", "Unexpected handle_ref schema")
+    return identity
+
+
+def prepare_edit(native: dict, pattern_uuid: str, handle_ref: str, target_xy_mm,
+                 *, tolerance_mm: float = .002, scene_scope=None) -> dict:
+    target_xy = _xy(target_xy_mm, "target_xy_mm")
+    tolerance = _tolerance(tolerance_mm)
+    identity = _reference_identity(handle_ref)
     if identity.get("pattern_uuid") != pattern_uuid:
         raise CurveError("WRONG_OWNER", "The handle reference belongs to another pattern")
     analysis = _analyse(native, pattern_uuid, scene_scope)

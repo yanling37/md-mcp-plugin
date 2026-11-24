@@ -69,10 +69,11 @@ def plan_two_scales(fine_columns, coarse_columns, delta_mm, tolerance_mm=.002, m
     """Find bounded coarse*m + fine*n within a separate predicted-error budget.
 
     Each of mX,mY,nX,nY is an integer in [-max_step,max_step], max_step <= 32.
-At most two scale-vector batches and 4*max_step total absolute pixel units
+    At most two scale-vector batches and 4*max_step total absolute pixel units
     are planned. Each nonzero scale vector must also meet min_batch_length_px.
-    The default budget is half the requested tolerance. A caller with independently verified
-    calibration closure can use 85 percent. Native readback still uses the full original tolerance.
+    The default budget is half the requested tolerance. The caller can use 85 percent after
+    verified calibration closure, or search the whole tolerance as a final fallback.
+    That fallback favors the smallest predicted error. Native readback still decides success.
 """
     if type(max_step) is not int or not 1 <= max_step <= _MAX_STEP:
         _fail('LATTICE_STEP_BUDGET', 'max_step must be an integer from 1 to 32')
@@ -117,8 +118,9 @@ At most two scale-vector batches and 4*max_step total absolute pixel units
     qfine = [[Fraction(v) for v in c] for c in fine]
     qcoarse = [[Fraction(v) for v in c] for c in coarse]
     qdelta = [Fraction(v) for v in delta]
-    if type(prediction_budget_fraction) is not float or prediction_budget_fraction not in (.5, .85):
-        _fail('INVALID_LATTICE_INPUT', 'Prediction budget must be half or 85 percent of the original tolerance')
+    if type(prediction_budget_fraction) is not float or prediction_budget_fraction not in (.5, .85, 1.0):
+        _fail('INVALID_LATTICE_INPUT', 'Prediction budget must be half, 85 percent or the full original tolerance')
+    use_full_tolerance = prediction_budget_fraction == 1.0
     budget = Fraction(tolerance_mm) * Fraction(str(prediction_budget_fraction))
     bound = budget**2
     accepted = []
@@ -136,7 +138,8 @@ At most two scale-vector batches and 4*max_step total absolute pixel units
             if error2 <= bound:
                 travel = sum(abs(v) for v in m+n)
                 batches = int(any(m)) + int(any(n))
-                accepted.append(((travel, batches, error2, tuple(m), tuple(n)), m, n, predicted, residual, error2))
+                ranking = (error2, travel, batches) if use_full_tolerance else (travel, batches, error2)
+                accepted.append(((*ranking, tuple(m), tuple(n)), m, n, predicted, residual, error2))
     if not accepted:
         raise LatticeError('LATTICE_TARGET_UNREACHABLE', 'No retained bounded candidate meets the prediction budget',
                            dict(best_predicted_error_mm=None if best_error is None else math.sqrt(float(best_error)),

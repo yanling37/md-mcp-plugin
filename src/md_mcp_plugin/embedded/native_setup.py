@@ -26,13 +26,12 @@ def configure_canvas():
     return install_native_bridge(str(directory / manifest["library"]), manifest["sha256"])
 
 
-def configure_scene_adapter():
+def _packaged_scene_adapter():
     import tempfile
-    install_native_bridge = get_scene_adapter().install_native_bridge
     directory = Path(__file__).resolve().parents[1] / "native" / "scene_adapter"
     path = directory / "manifest.json"
     if not path.is_file():
-        return {"configured": False, "reason": "PACKAGED_SCENE_ADAPTER_MISSING"}
+        return None
     manifest = json.loads(path.read_text(encoding="utf8"))
     libraries = {'md-mcp-packaged-scene-adapter/2':'md_qt_scene_adapter_capture_r2_bridge.dll',
                  'md-mcp-packaged-scene-adapter/3':'md_qt_scene_adapter_zoom_r3_bridge.dll',
@@ -46,8 +45,16 @@ def configure_scene_adapter():
             or re.fullmatch("[0-9a-f]{64}", manifest["sha256"]) is None
             or manifest.get("revision") != manifest["sha256"]):
         raise ValueError("Invalid packaged scene adapter manifest")
-    return install_native_bridge(str(directory / manifest["revision"] / manifest["library"]), manifest["sha256"],
-                                 artifact_root=Path(tempfile.gettempdir()) / "md-mcp-plugin-scene-captures")
+    library = directory / manifest["revision"] / manifest["library"]
+    return {"path": str(library), "sha256": manifest["sha256"],
+            "artifact_root": Path(tempfile.gettempdir()) / "md-mcp-plugin-scene-captures"}
+
+
+def configure_scene_adapter():
+    package = _packaged_scene_adapter()
+    if package is None:
+        return {"configured": False, "reason": "PACKAGED_SCENE_ADAPTER_MISSING"}
+    return get_scene_adapter().install_native_bridge(**package)
 
 
 def get_scene_adapter():

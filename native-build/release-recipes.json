@@ -752,14 +752,15 @@
         "qt_scene_adapter_v6/capture_gl.inc"
       ],
       "source_sha256": {
-        "qt_scene_adapter_v6/bridge.cpp": "f2833e9cbbc66bf7d6cafbaa78b16eccbec1f252bfc3cdaa0a88f5c46c467885",
+        "qt_scene_adapter_v6/bridge.cpp": "6959f246cfa7e7eb86ea2da5de6810f6cb4fa3bf0ee542fb281cc301e64487ba",
         "qt_scene_adapter_v6/canvas_common.inc": "fc7a3794a75e889bfc51726217269285c2ad8641d8f4c8a932322f2071585878",
-        "qt_scene_adapter_v6/capture_gl.inc": "829938bfdc4f0281fbe0ea804159514acf716ae365bf5f84a5debaebe4d7f2c9"
+        "qt_scene_adapter_v6/capture_gl.inc": "19a4b9a574d8b7e1ab23a217584397db0498a65d9d85110ec75401cb039ac4fb"
       },
       "abi": 6,
       "exports": [
         "mdqt_scene_adapter_abi_version",
-        "mdqt_scene_adapter_json"
+        "mdqt_scene_adapter_json",
+        "mdqt_scene_adapter_recovery_epoch"
       ],
       "qt_modules": [
         "Qt6Core",

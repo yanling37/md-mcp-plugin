@@ -2,11 +2,13 @@
 import importlib
 import hashlib
 from pathlib import Path
+import re
 import sys
 import traceback
 
 from md_mcp_plugin.errors import PluginError
 from .common import check_scene_token, digest
+from .curve_release_recovery import RECOVERY as CURVE_RELEASE_RECOVERY, is_sha256
 
 PROTOCOL = "md-mcp-plugin/1"
 MODULES = frozenset(("scene", "project", "transforms", "curves", "cloth", "cloth_vertex_context", "cut", "cut_qt", "canvas", "selection", "mesh", "scene_adapter", "rest_adapter", "world_adapter", "world_frame", "world_grid_step", "world_numeric_probe", "rest_dock_identity", "rest_visible_contents", "rest_visible_recovery", "rest_pinching_override", "rest_simulation_context", "rest_cold", "gizmo_scale"))
@@ -51,6 +53,10 @@ def execute(request):
             raise PluginError('INVALID_REQUEST', 'A journaled current scene is required for Cloth recovery')
         if operation == 'rest_cold.begin' and (operation_id is None or request.get('scene_token') != params.get('scene_token')):
             raise PluginError('INVALID_REQUEST', 'A journaled current scene is required for Rest initialization')
+        if operation == CURVE_RELEASE_RECOVERY and (
+                type(operation_id) is not str or re.fullmatch('[0-9a-f]{32}', operation_id) is None
+                or operation_id == params.get('blocked_request_id') or not is_sha256(request.get('scene_token'))):
+            raise PluginError('INVALID_REQUEST', 'A distinct journaled request and current scene token are required for curve recovery')
         module = _module(operation.split(".", 1)[0])
         if operation == 'world_adapter.reconcile_rotation':
             if operation_id is None or request.get('scene_token') != params.get('scene_token'):
@@ -64,7 +70,7 @@ def execute(request):
             function = module.OPERATIONS.get(module.__name__.rsplit('.', 1)[-1] + '.' + operation.split('.', 1)[1])
         if not callable(function):
             raise PluginError('UNSUPPORTED_OPERATION', 'Operation is not implemented', operation=operation)
-        if operation.startswith("canvas.") or operation == 'project.recover_curve':
+        if operation.startswith("canvas.") or operation in ('project.recover_curve', CURVE_RELEASE_RECOVERY):
             _module("native_setup").configure_canvas()
         elif operation.startswith("scene_adapter."):
             _module("native_setup").configure_scene_adapter()

@@ -294,6 +294,7 @@ CutActions selectedCut(const Scope& s, Budget& budget, bool after = false) {
 } // namespace
 
 extern "C" __declspec(dllexport) unsigned __cdecl mdqt_scene_adapter_abi_version() noexcept { return 6; }
+extern "C" __declspec(dllexport) unsigned __cdecl mdqt_scene_adapter_recovery_epoch() noexcept { return 1; }
 extern "C" __declspec(dllexport)
 int __cdecl mdqt_scene_adapter_json(std::uint32_t pid, std::uint64_t creation, const char* input, unsigned length,
     char* output, unsigned cap, unsigned* written, unsigned* needed) noexcept {
