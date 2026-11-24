@@ -24,6 +24,7 @@ class BoundaryFixture:
         self.drift_on_fit, self.drift_on_zoom = drift_on_fit, drift_on_zoom
         self.drift_on_capture = drift_on_capture
         self.calls, self.drag_count = [], 0
+        self.capture_scopes = []
         self.drag_budgets = []
         self.partial_calibration = partial_calibration
         self.request = dict(pattern_uuid="paper", scene_scope={}, reference={},
@@ -41,6 +42,7 @@ class BoundaryFixture:
 
     def capture_2d(self, params):
         self.calls.append("capture")
+        self.capture_scopes.append(params)
         if self.drift_on_capture:
             self.drift_on_capture = False
             self.xy[0] += .25
@@ -72,7 +74,8 @@ class BoundaryFixture:
         self.calls.append("zoom")
         if self.drift_on_zoom:
             self.xy[0] += .25
-        return self.ok(effects=True)
+        return self.ok(dict(after=dict(view_ref="zoomed-view", view_fingerprint="zoomed-fingerprint"),
+                            scene_token_after="scene", tools_after=dict(current_tool="edit_curve_point")), effects=True)
 
     def fit_selected(self, params):
         self.calls.append("fit")
@@ -188,6 +191,9 @@ class PrecisionTests(unittest.TestCase):
         # compare its own native before/after instead of treating them as edits.
         self.assertEqual(1, f.drag_count, "View-only target drift must not authorize calibration")
         self.assertEqual(1, f.calls.count("zoom"))
+        self.assertEqual("capture", f.calls[f.calls.index("zoom") + 1])
+        self.assertEqual(dict(view_ref="zoomed-view", view_fingerprint="zoomed-fingerprint", scene_token="scene"),
+                         f.capture_scopes[-1])
         self.assertEqual("VIEW_PREPARATION_CHANGED_NATIVE_DATA", result["error"]["code"])
         self.assertTrue(result["requires_recovery"])
 

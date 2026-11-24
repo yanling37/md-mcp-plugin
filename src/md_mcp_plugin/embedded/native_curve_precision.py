@@ -59,20 +59,39 @@ def set_handle(request, adapter):
         raw=response.get('result') or {}
         effects=effects or response.get('effects_started',False)
         if name=='bezier_drag': geometry_dispatched=geometry_dispatched or response.get('effects_started',False)
-        trace.append(dict(operation=name,status=response['status'],error=response.get('error'),
+        entry = dict(operation=name,status=response['status'],error=response.get('error'),
             event_calls=raw.get('event_calls',0),requires_recovery=response.get('requires_recovery',False),
             paired_release_verified=raw.get('paired_release_verified',False),
-            events=raw.get('events',[]),snap_settings=raw.get('snap_settings'),image=raw.get('image')))
+            events=raw.get('events',[]),snap_settings=raw.get('snap_settings'),image=raw.get('image'))
+        if type(raw.get('elapsed_ms')) is int:
+            entry['native_elapsed_ms'] = raw['elapsed_ms']
+        if name == 'capture' and response['status'] not in ('SUCCEEDED', 'NO_OP'):
+            entry['capture_guard_failure'] = raw.get('capture_guard_failure')
+            entry['capture_cleanup'] = {key: raw[key] for key in (
+                'capture_effects_started', 'paint_event_sent', 'paint_event_returned',
+                'original_Qt_context_surface_restored', 'original_WGL_context_dc_restored',
+                'original_framebuffer_bindings_restored', 'owned_resources_cleanup_verified',
+                'source_metadata_before_after_verified', 'app_GL_observed_state_unchanged',
+            ) if type(raw.get(key)) is bool}
+            entry['capture_calls'] = {key: raw[key] for key in (
+                'viewport_makeCurrent_calls', 'direct_QPaintEvent_send_calls',
+            ) if type(raw.get(key)) is int}
+        trace.append(entry)
         if response['status'] not in ('SUCCEEDED','NO_OP'):
             all_closed=all_closed and not response.get('requires_recovery',False)
             raise StopWrite('CURVE_'+name.upper()+'_FAILED',str(response.get('error')),response.get('requires_recovery',False))
         return raw
 
-    def capture():
-        inspected=native('inspect',adapter.inspect_2d({}))
-        if inspected['tools_after'].get('current_tool')!='edit_curve_point':
+    def capture(zoom_result=None):
+        if zoom_result is None:
+            view = native('inspect', adapter.inspect_2d({}))
+            scope = _scope({'result': view})
+        else:
+            view = zoom_result
+            scope = scope_after(view)
+        if view['tools_after'].get('current_tool') != 'edit_curve_point':
             raise StopWrite('CURVE_MODE_REQUIRED','Select Edit Curve Point before writing')
-        raw=native('capture',adapter.capture_2d(_scope({'result':inspected})))
+        raw = native('capture', adapter.capture_2d(scope))
         image=raw['image']
         return raw,Path(image['path']).read_bytes()
 
@@ -146,8 +165,8 @@ def set_handle(request, adapter):
             return raw,marker
         def wheel(raw,marker,outward):
             method=adapter.zoom_out_at if outward else adapter.zoom_in_at
-            native('zoom_out_at' if outward else 'zoom_in_at',method(dict(scope_after(raw),point=marker['hit_xy_px'])))
-            raw,png=capture()
+            zoomed = native('zoom_out_at' if outward else 'zoom_in_at', method(dict(scope_after(raw), point=marker['hit_xy_px'])))
+            raw,png=capture(zoomed)
             view_only_readback('after_lattice_view_change')
             marker=track_marker(png,marker['hit_xy_px'],device_pixel_ratio=raw['image']['device_pixel_ratio'],allowed_colors=('blue','yellow'))
             trace.append(dict(operation='lattice_view_marker',outward=outward,image=raw['image'],marker=marker['trace_record']))
@@ -264,8 +283,8 @@ def set_handle(request, adapter):
             consecutive_unchanged_frames = 0
             for step in range(zoom_count):
                 previous_image_sha = raw['image'].get('sha256')
-                native('zoom_in_at',adapter.zoom_in_at(dict(scope_after(raw),point=marker['hit_xy_px'])))
-                following,png=capture()
+                zoomed = native('zoom_in_at', adapter.zoom_in_at(dict(scope_after(raw), point=marker['hit_xy_px'])))
+                following,png=capture(zoomed)
                 view_only_readback('after_zoom_'+str(total_zoom))
                 marker=track_marker(png,marker['hit_xy_px'],device_pixel_ratio=following['image']['device_pixel_ratio'],allowed_colors=('blue','yellow'))
                 trace.append(dict(operation='zoom_marker',step=total_zoom,image=following['image'],marker=marker['trace_record']))
