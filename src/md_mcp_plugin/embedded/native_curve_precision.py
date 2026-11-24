@@ -39,6 +39,21 @@ def inverse_jacobian(columns):
     return [[y[1]/determinant,-y[0]/determinant],[-x[1]/determinant,x[0]/determinant]],max(nx,ny)
 
 
+def capture_guard_rejected_before_effects(response):
+    error = response.get('error')
+    raw = response.get('result')
+    if (response.get('status') != 'REJECTED' or response.get('effects_started') is not False
+            or response.get('requires_recovery') is not False or not isinstance(error, dict)
+            or error.get('code') != 'BACKGROUND_INPUT_GUARD' or not isinstance(raw, dict)
+            or raw.get('operation') != 'capture' or raw.get('capture_effects_started', False) is not False):
+        return False
+    counters = raw.get('controller_calls')
+    if not isinstance(counters, dict):
+        return False
+    zeroes = (raw.get('event_calls'), raw.get('QAction_trigger_calls'), counters.get('paint_resolve_capture_calls'))
+    return all(type(count) is int and count == 0 for count in zeroes)
+
+
 def set_handle(request, adapter):
     from .native_curve_provider import _resolve, _scope
     trace=[]
@@ -47,6 +62,7 @@ def set_handle(request, adapter):
     all_closed=True
     initial=current=plan=verification=None
     hit_offset=[0.,0.]
+    capture_retry_used = False
 
     def reply(status, code=None, message=None, recovery=False, **extra):
         return dict(status=status,effects_started=effects,geometry_effects_started=geometry_dispatched,
@@ -83,6 +99,7 @@ def set_handle(request, adapter):
         return raw
 
     def capture(zoom_result=None):
+        nonlocal capture_retry_used
         if zoom_result is None:
             view = native('inspect', adapter.inspect_2d({}))
             scope = _scope({'result': view})
@@ -91,7 +108,19 @@ def set_handle(request, adapter):
             scope = scope_after(view)
         if view['tools_after'].get('current_tool') != 'edit_curve_point':
             raise StopWrite('CURVE_MODE_REQUIRED','Select Edit Curve Point before writing')
-        raw = native('capture', adapter.capture_2d(scope))
+        response = adapter.capture_2d(scope)
+        try:
+            raw = native('capture', response)
+        except StopWrite:
+            if capture_retry_used or not capture_guard_rejected_before_effects(response):
+                raise
+            capture_retry_used = True
+            view_only_readback('before_capture_guard_retry')
+            fresh = native('inspect', adapter.inspect_2d({}))
+            fresh_scope = _scope({'result': fresh})
+            if fresh_scope != scope or fresh['tools_after'].get('current_tool') != 'edit_curve_point':
+                raise StopWrite('CAPTURE_RETRY_SCOPE_CHANGED', 'The 2D view or Edit Curve Point mode changed before retry')
+            raw = native('capture', adapter.capture_2d(fresh_scope))
         image=raw['image']
         return raw,Path(image['path']).read_bytes()
 
@@ -127,15 +156,13 @@ def set_handle(request, adapter):
                 or any(current['public'][k]!=baseline['public'][k]for k in ('scene_fingerprint','geometry_fingerprint','topology_fingerprint'))):
             raise StopWrite('VIEW_PREPARATION_CHANGED_NATIVE_DATA','View/selection preparation changed the current native geometry',True)
 
-    def drag(raw,start,pixels,label,coarse=False):
+    def drag(raw,start,pixels,label):
         end=[a+b for a,b in zip(start,pixels)]
         width,height=raw['image']['viewport_size']
         if math.hypot(*pixels)>300 or not (3<=end[0]<width-3 and 3<=end[1]<height-3):
             raise StopWrite('TARGET_OUTSIDE_PRECISION_VIEW','Measured correction is outside the current viewport')
-        drag_params = dict(scope_after(raw), start=list(start), end=end)
-        if not coarse:
-            # Leave room for the move callback and the checked release in each zoomed-in batch.
-            drag_params['budget_ms'] = 1500
+        # Leave time for the synchronous move and the checks after normal release.
+        drag_params = dict(scope_after(raw), start=list(start), end=end, budget_ms=1500)
         native('bezier_drag', adapter.bezier_drag(drag_params))
         return readback(label)
 
@@ -194,7 +221,7 @@ def set_handle(request, adapter):
             raw,marker=return_origin(raw,marker,coarse_inverse,origin,coarse_resolution,'return_coarse_calibration_origin')
             return raw,marker,coarse_columns,verification['actual_xy_mm'] == origin
 
-        def plan_current(coarse_columns, coarse_return_exact, cycle):
+        def plan_current(coarse_columns, coarse_return_exact, cycle, *, final_scale=False):
             delta = [a-b for a,b in zip(plan['target_xy_mm'], verification['actual_xy_mm'])]
             options = dict(tolerance_mm=request['tolerance_mm'], min_batch_length_px=16)
             try:
@@ -206,7 +233,12 @@ def set_handle(request, adapter):
                 if (exc.code != 'LATTICE_TARGET_UNREACHABLE' or cycle != 0
                         or not (closed and fine_return_exact and coarse_return_exact)):
                     raise
-                return planner(fine_columns, coarse_columns, delta, prediction_budget_fraction=.85, **options)
+                try:
+                    return planner(fine_columns, coarse_columns, delta, prediction_budget_fraction=.85, **options)
+                except lattice_solver.LatticeError as reserve_error:
+                    if reserve_error.code != 'LATTICE_TARGET_UNREACHABLE' or not final_scale:
+                        raise
+                    return planner(fine_columns, coarse_columns, delta, prediction_budget_fraction=1.0, **options)
 
         outward_steps=1
         raw,marker,coarse_columns,coarse_return_exact=measure_coarse(raw,marker,outward_steps)
@@ -220,7 +252,7 @@ def set_handle(request, adapter):
                 outward_steps=2
                 raw,marker,coarse_columns,coarse_return_exact=measure_coarse(raw,marker,outward_steps)
                 if verification['target_reached']:return finish()
-                lattice=plan_current(coarse_columns,coarse_return_exact,cycle)
+                lattice=plan_current(coarse_columns,coarse_return_exact,cycle,final_scale=True)
             previous_error=verification['target_error_mm']
             trace.append(dict(operation='two_scale_integer_plan',cycle=cycle,plan=lattice,outward_steps=outward_steps))
             for outward,key in ((True,'coarse_steps_px'),(False,'fine_steps_px')):
@@ -266,7 +298,7 @@ def set_handle(request, adapter):
                      for row,offset in zip(matrix,projection['translation'])]
         hit_offset=[a-b for a,b in zip(first_start,marker['hit_xy_px'])]
         if math.hypot(*pixels)>1e-6:
-            drag(raw,first_start,pixels,'coarse',coarse=True)
+            drag(raw,first_start,pixels,'coarse')
             if verification['target_reached']: return finish()
         else:
             readback('initial')
