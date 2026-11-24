@@ -3,6 +3,7 @@ import threading
 
 from .errors import PluginError
 from .embedded.cloth_position_recovery import RECOVERY as CLOTH_POSITION_RECOVERY, RESTORED as CLOTH_POSITION_RESTORED, WRITE as CLOTH_POSITION
+from .embedded import curve_release_recovery as curve_release
 from .journal import (CLOTH_REST, CLOTH_REST_OBSERVED, CLOTH_REST_RECONCILE,
                       GIZMO_SCALE_PAIR, GIZMO_SCALE_RECOVERY, GIZMO_SCALE_RESTORED,
                       GRID_AXIS, GRID_AXIS_RECOVERY, GRID_AXIS_RESTORED,
@@ -103,8 +104,13 @@ class Context:
                     if self.journal._matching_lease(request_id, GRID_AXIS):
                         return self.journal.finish(request_id, record['receipt'])
                     return record
+                if record['operation'] == curve_release.WRITE and (record.get('recovery') or {}).get('status') == curve_release.REPLACED:
+                    if self.journal._matching_lease(request_id, curve_release.WRITE):
+                        child = self.journal.get(record['recovery']['request_id'])
+                        self.journal.finish(child['request_id'], child['receipt'])
+                    return record
                 if record['operation'] in (GRID_AXIS_RECOVERY, CLOTH_POSITION_RECOVERY, CLOTH_REST_RECONCILE, GIZMO_SCALE_RECOVERY,
-                                           WORLD_ROTATION_RECONCILE) and record['status'] == 'SUCCEEDED':
+                                           WORLD_ROTATION_RECONCILE, curve_release.RECOVERY) and record['status'] == 'SUCCEEDED':
                     return self.journal.finish(request_id, record['receipt'])
                 if record["status"] not in ("PENDING", "UNKNOWN"):
                     return record
@@ -144,6 +150,9 @@ class Context:
 
     def recover_curve_operation(self, blocked_request_id, request_id, scene_token, expected_source_sha256):
         return self._recover_project_operation('project.recover_curve', blocked_request_id, request_id, scene_token, expected_source_sha256)
+
+    def reconcile_released_curve_drag(self, blocked_request_id, request_id, scene_token, expected_source_sha256):
+        return self._recover_project_operation(curve_release.RECOVERY, blocked_request_id, request_id, scene_token, expected_source_sha256)
 
     def recover_cut_operation(self, blocked_request_id, request_id, scene_token, expected_source_sha256):
         return self._recover_project_operation('project.recover_cut', blocked_request_id, request_id, scene_token, expected_source_sha256)
@@ -243,7 +252,7 @@ class Context:
             record, fresh = self.journal.claim_recovery(request_id, blocked_request_id, params, scene_token, operation=operation)
             if not fresh:
                 if operation in (GRID_AXIS_RECOVERY, CLOTH_POSITION_RECOVERY, CLOTH_REST_RECONCILE,
-                                 GIZMO_SCALE_RECOVERY, WORLD_ROTATION_RECONCILE) and record['status'] == 'SUCCEEDED':
+                                 GIZMO_SCALE_RECOVERY, WORLD_ROTATION_RECONCILE, curve_release.RECOVERY) and record['status'] == 'SUCCEEDED':
                     return self.journal.finish(request_id, record['receipt'])
                 return record
             try:
@@ -251,6 +260,8 @@ class Context:
             except PluginError as exc:
                 receipt = {'status': 'FAILED' if exc.details.get('outcome') == 'not_sent' else 'UNKNOWN',
                            'operation_id': request_id, 'result': None, 'error': exc.as_dict()}
+                if operation == curve_release.RECOVERY and receipt['status'] == 'FAILED':
+                    receipt.update(effects_started=False, requires_recovery=False)
             return self.journal.finish(request_id, receipt)
 
     def reconcile_property_operation(self, blocked_request_id, request_id, scene_token):

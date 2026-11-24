@@ -65,6 +65,10 @@ For a client that calls tools directly, use this sequence. Fetch scene and viewp
 
 If the edit succeeds, record your time from setup to first verified reopen, the number of MCP tool calls and the manual steps you took. Report installation or edit failures through [GitHub Issues](https://github.com/yanling37/md-mcp-plugin/issues). Include the MD build, diagnostic check, failing tool and error code. You can use this public panel to reproduce the problem.
 
+### A released drag with a partial receipt
+
+`md_reconcile_released_curve_drag` can resume an open project after a cooperative timeout on the first ordinary drag. It requires the original partial request ID and its held journal lease, a fresh scene token, the saved project's SHA-256, and a distinct successor bridge from the installed package. The original receipt must show all four events returned, an exact target readback, and unchanged surrounding pattern semantics. The tool rechecks native geometry and background input before routing to the successor in the same MD process. Use `md_operation_status` with the recovery request ID if the reply is lost.
+
 | Symptom | Check |
 | --- | --- |
 | Session reachable but bridge absent or rejected | Run `doctor` using the Python command configured in the MCP client. Check the staged package location, MD build and bridge hashes. |

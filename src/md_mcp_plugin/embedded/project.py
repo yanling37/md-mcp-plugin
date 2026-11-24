@@ -166,6 +166,54 @@ def recover_curve(params):
     return result
 
 
+def reconcile_released_curve_drag(params):
+    from . import canvas, curves, dispatch, selection
+    from .curve_release_recovery import released_curve_drag_proof
+    from .native_setup import _packaged_scene_adapter, get_scene_adapter
+
+    try:
+        original_id = params['blocked_request_id']
+        expected_source = params['expected_source_sha256']
+        previous = dispatch._RECEIPTS.get(original_id)
+        proof = released_curve_drag_proof(previous, original_id)
+        initial = scene()
+        source = Path(initial['identity']['project_path'])
+        if (not source.is_absolute() or not source.is_file() or source.is_symlink()
+                or source.suffix.lower() != '.zprj' or hashlib.sha256(source.read_bytes()).hexdigest() != expected_source):
+            raise ValueError('The original active, saved project must still match its source SHA-256')
+
+        def verify_current():
+            current = curves._read_current(proof['pattern_uuid'])
+            binding = current['public'].get('native_endpoint_binding') or {}
+            if (Path(current['scope']['project']).resolve() != source.resolve() or binding.get('verified') is not True
+                    or any(current['public'].get(key) != value for key, value in proof['native_fingerprints'].items())):
+                raise ValueError('Native paper and scope must still match the exact partial operation')
+            _verify_closed_background_input(canvas, budget_ms=1500)
+            selected = selection.inspect_selection({})['selected']
+            if [item['pattern_uuid'] for item in selected] != [proof['pattern_uuid']] or scene() != initial:
+                raise ValueError('The released pattern must still be the sole selected pattern in the original project')
+
+        verify_current()
+        adapter = get_scene_adapter()
+        old, successor, evidence = adapter.prepare_closed_drag_successor(_packaged_scene_adapter())
+        verify_current()
+        if hashlib.sha256(source.read_bytes()).hexdigest() != expected_source:
+            raise ValueError('The original project file changed during independent observation')
+        identity = initial['identity']
+        process = {key: identity[key] for key in ('pid', 'creation_filetime')}
+        if old['loaded_process'] != process:
+            raise ValueError('The original blocked native bridge belongs to a different process lifetime')
+        result = dict(evidence, verified=True, recovered_operation_id=original_id,
+                      recovery_action='RELEASED_CURVE_BRIDGE_REPLACED', original_mutation_status='PARTIAL',
+                      source_sha256=expected_source, scene_token=initial['scene_token'], process_identity=process,
+                      native_fingerprints=proof['native_fingerprints'], target_xy_mm=proof['target_xy_mm'],
+                      native_scene_unchanged=True, old_bridge_retired=True, requires_recovery=False)
+        adapter.adopt_closed_drag_successor(old, successor)
+        return result
+    except Exception as exc:
+        raise PluginError('RELEASED_CURVE_RECOVERY_REJECTED', str(exc), effects_started=False) from exc
+
+
 def recover_cut(params):
     from . import dispatch
 
@@ -258,7 +306,7 @@ def recover_cut(params):
             raise ValueError('Saved source project differs from the recovery checkpoint')
         if not canvas._state()['configuration']:
             dispatch._module('native_setup').configure_canvas()
-        _verify_closed_cut_input(canvas)
+        _verify_closed_background_input(canvas)
         if scene() != current:
             raise ValueError('Current project changed immediately before recovery')
     except Exception as exc:
@@ -281,7 +329,7 @@ def recover_cut(params):
             baseline = cut._capture_current(cut._native._api())
             if baseline['rows'] != reopened['patterns'] or scene() != reopened:
                 raise ValueError('Reopened native data did not match fresh runtime readback')
-            _verify_closed_cut_input(canvas)
+            _verify_closed_background_input(canvas)
             if scene() != reopened:
                 raise ValueError('Reopened scene changed before the recovery commit')
             if timed_out_after_return:
@@ -297,11 +345,14 @@ def recover_cut(params):
     return restored
 
 
-def _verify_closed_cut_input(canvas):
-    observed = canvas.views({'view': 'all'})
+def _verify_closed_background_input(canvas, **options):
+    observed = canvas.views({'view': 'all', **options})
+    if observed['status'] != 'SUCCEEDED':
+        error = observed.get('error') or {}
+        raise ValueError('Background input inspection was rejected: ' + error.get('code', observed['status']))
     result = observed.get('result') or {}
     views = result.get('views') or []
-    if (observed['status'] != 'SUCCEEDED' or result.get('physical', {}).get('background_safe') is not True
+    if (result.get('physical', {}).get('background_safe') is not True
             or not views or any(view.get('scene_item_grabber_absent') is not True for view in views)):
         raise ValueError('Current background input state is not closed')
 
@@ -310,5 +361,6 @@ OPERATIONS = {
     "project.open": open_project,
     "project.save_copy": save_copy,
     'project.recover_curve': recover_curve,
+    'project.reconcile_released_curve_drag': reconcile_released_curve_drag,
     'project.recover_cut': recover_cut,
 }
